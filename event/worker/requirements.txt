@@ -1,0 +1,5 @@
+aio-pika
+openai
+asyncpg
+SQLAlchemy
+psycopg2-binary

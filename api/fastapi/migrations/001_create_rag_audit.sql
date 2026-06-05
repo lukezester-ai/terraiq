@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS rag_audit (
+    id SERIAL PRIMARY KEY,
+    query TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgis/postgis:15-3.3
+    environment:
+      POSTGRES_USER: terraiq
+      POSTGRES_PASSWORD: terraiqpass
+      POSTGRES_DB: terraiqdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "terraiq"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  fastapi:
+    build:
+      context: ./api/fastapi
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - elasticsearch
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://terraiq:terraiqpass@postgres:5432/terraiqdb
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+  worker:
+    build:
+      context: ./event/worker
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+      - postgres
+    environment:
+      - DATABASE_URL_ASYNC=postgresql+asyncpg://terraiq:terraiqpass@postgres:5432/terraiqdb
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+volumes:
+  pgdata:

@@ -1,0 +1,49 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+# OpenTelemetry imports
+from opentelemetry import trace
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.prometheus import PrometheusMetricsExporter
+
+from .routers import rag, image
+
+# Initialize OpenTelemetry Tracer
+resource = Resource(attributes={
+    "service.name": "terraiq-fastapi",
+    "service.version": "0.1.0",
+})
+provider = TracerProvider(resource=resource)
+trace.set_tracer_provider(provider)
+# Prometheus exporter (exposes at /metrics)
+prometheus_exporter = PrometheusMetricsExporter()
+provider.add_span_processor(BatchSpanProcessor(prometheus_exporter))
+
+app = FastAPI(title="TerraIQ FastAPI", version="0.1.0")
+
+# CORS – allow frontend on localhost and Vercel domain
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # adjust in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Instrument FastAPI app
+FastAPIInstrumentor().instrument_app(app)
+
+app.include_router(rag.router, prefix="/rag", tags=["RAG"])
+app.include_router(image.router, prefix="/upload", tags=["Image"])
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+# Expose Prometheus metrics endpoint (provided by exporter)
+@app.get("/metrics")
+async def metrics():
+    return prometheus_exporter.metrics

@@ -32,3 +32,5 @@ terraiq/
 ```
 
 Feel free to adjust as needed.
+
+© 2026 AgriNexus. All rights reserved. Contact: info@agrinexus.eu
