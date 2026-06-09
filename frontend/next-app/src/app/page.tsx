@@ -3,6 +3,11 @@ import { motion, type Variants } from "framer-motion";
 import { ArrowRight, Brain, Shield, LineChart, Truck } from "lucide-react";
 import Link from "next/link";
 
+const ECOSYSTEM_LINKS = [
+  { href: "https://www.agrinexuslaw.com", label: "Agrinexus Law" },
+  { href: "https://fieldlot-agrinexus-projects.vercel.app", label: "FIELDLOT" },
+];
+
 export default function LandingPage() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -32,6 +37,20 @@ export default function LandingPage() {
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-600/20 rounded-full blur-[120px]" />
         <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[150px]" />
       </div>
+
+      <nav className="absolute left-1/2 top-5 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-neutral-950/70 px-3 py-2 text-sm text-neutral-300 shadow-2xl backdrop-blur-xl">
+        {ECOSYSTEM_LINKS.map((link) => (
+          <a
+            key={link.href}
+            href={link.href}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-full px-3 py-1.5 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            {link.label}
+          </a>
+        ))}
+      </nav>
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6">
         
