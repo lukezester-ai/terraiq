@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from ..models import RAGRequest, RAGResponse
-from ..dependencies import get_llm_async, get_db
+from models import RAGRequest, RAGResponse
+from dependencies import get_llm_async, get_db
 from sqlalchemy import text
 
 router = APIRouter()

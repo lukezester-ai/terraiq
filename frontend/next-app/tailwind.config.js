@@ -1,6 +1,5 @@
-import type { Config } from 'tailwindcss';
-
-export default {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   content: [
     "./src/**/*.tsx",
     "./src/**/*.ts",
@@ -21,4 +20,4 @@ export default {
     },
   },
   darkMode: "media",
-} satisfies Config;
+};

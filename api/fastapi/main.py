@@ -7,9 +7,16 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.prometheus import PrometheusMetricsExporter
+# from opentelemetry.exporter.prometheus import PrometheusMetricsExporter
 
-from .routers import rag, image
+from routers import rag, image, crm, payments
+from orchestrator import run_orchestrator
+from typing import Optional
+from pydantic import BaseModel
+
+class OrchestrateRequest(BaseModel):
+    query: str
+    farm_id: Optional[str] = "farm_1"
 
 # Initialize OpenTelemetry Tracer
 resource = Resource(attributes={
@@ -19,8 +26,8 @@ resource = Resource(attributes={
 provider = TracerProvider(resource=resource)
 trace.set_tracer_provider(provider)
 # Prometheus exporter (exposes at /metrics)
-prometheus_exporter = PrometheusMetricsExporter()
-provider.add_span_processor(BatchSpanProcessor(prometheus_exporter))
+# prometheus_exporter = PrometheusMetricsExporter()
+# provider.add_span_processor(BatchSpanProcessor(prometheus_exporter))
 
 app = FastAPI(title="TerraIQ FastAPI", version="0.1.0")
 
@@ -38,12 +45,20 @@ FastAPIInstrumentor().instrument_app(app)
 
 app.include_router(rag.router, prefix="/rag", tags=["RAG"])
 app.include_router(image.router, prefix="/upload", tags=["Image"])
+app.include_router(crm.router, prefix="/crm", tags=["CRM"])
+app.include_router(payments.router, prefix="/payments", tags=["Payments"])
 
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
 
+@app.post("/orchestrate")
+async def orchestrate(request: OrchestrateRequest):
+    result = await run_orchestrator(request.query, request.farm_id)
+    return {"status": "success", "recommendation": result["final_recommendation"], "details": result}
+
+
 # Expose Prometheus metrics endpoint (provided by exporter)
-@app.get("/metrics")
-async def metrics():
-    return prometheus_exporter.metrics
+# @app.get("/metrics")
+# async def metrics():
+#     return prometheus_exporter.metrics

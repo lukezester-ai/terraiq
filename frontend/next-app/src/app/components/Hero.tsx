@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { type ReactNode } from "react";
 import Image from "next/image";
 import { useSpring, animated } from "@react-spring/web";
 
 export const Hero: React.FC = () => {
+  const renderAnimatedNumber = (value: unknown): ReactNode => value as ReactNode;
+
   // Animated counters
   const fields = useSpring({ from: { number: 0 }, to: { number: 12450 }, config: { duration: 2000 } });
   const decisions = useSpring({ from: { number: 0 }, to: { number: 84932 }, config: { duration: 2000 } });
@@ -36,19 +38,19 @@ export const Hero: React.FC = () => {
         {/* Animated stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 text-center">
           <div>
-            <animated.span className="block text-2xl font-bold">{fields.number.to((n) => Math.floor(n).toLocaleString())}</animated.span>
+            <animated.span className="block text-2xl font-bold">{renderAnimatedNumber(fields.number.to((n) => Math.floor(n).toLocaleString()))}</animated.span>
             <span className="text-sm">Fields Managed</span>
           </div>
           <div>
-            <animated.span className="block text-2xl font-bold">{decisions.number.to((n) => Math.floor(n).toLocaleString())}</animated.span>
+            <animated.span className="block text-2xl font-bold">{renderAnimatedNumber(decisions.number.to((n) => Math.floor(n).toLocaleString()))}</animated.span>
             <span className="text-sm">AI Decisions Today</span>
           </div>
           <div>
-            <animated.span className="block text-2xl font-bold">{flights.number.to((n) => Math.floor(n).toLocaleString())}</animated.span>
+            <animated.span className="block text-2xl font-bold">{renderAnimatedNumber(flights.number.to((n) => Math.floor(n).toLocaleString()))}</animated.span>
             <span className="text-sm">Drone Flights</span>
           </div>
           <div>
-            <animated.span className="block text-2xl font-bold">{health.number.to((n) => n.toFixed(1))}%</animated.span>
+            <animated.span className="block text-2xl font-bold">{renderAnimatedNumber(health.number.to((n) => `${n.toFixed(1)}%`))}</animated.span>
             <span className="text-sm">Crop Health</span>
           </div>
         </div>
