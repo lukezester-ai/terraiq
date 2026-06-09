@@ -5,7 +5,7 @@ import Link from "next/link";
 
 const ECOSYSTEM_LINKS = [
   { href: "https://www.agrinexuslaw.com", label: "Agrinexus Law" },
-  { href: "https://fieldlot-agrinexus-projects.vercel.app", label: "FIELDLOT" },
+  { href: "https://www.fieldlot.io", label: "FIELDLOT" },
 ];
 
 export default function LandingPage() {
