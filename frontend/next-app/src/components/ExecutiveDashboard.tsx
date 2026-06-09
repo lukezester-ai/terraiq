@@ -22,13 +22,17 @@ export default function ExecutiveDashboard() {
     setIsLoading(true);
     setResponse(null);
     try {
-      const res = await fetch("http://localhost:8000/orchestrate", {
+      const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({
+          query,
+          context:
+            "Executive dashboard request for TerraIQ. Give practical agricultural business analysis with next actions.",
+        }),
       });
       const data = await res.json();
-      setResponse(data.recommendation);
+      setResponse(data.answer || data.error || "TerraIQ AI did not return an answer.");
     } catch (e) {
       console.error(e);
       setResponse("ERROR: CONNECTION TO INTELLIGENCE CORE FAILED.");

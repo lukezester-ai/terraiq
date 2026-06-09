@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # OpenTelemetry imports
@@ -9,7 +9,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 # from opentelemetry.exporter.prometheus import PrometheusMetricsExporter
 
-from routers import rag, image, crm, payments
+from routers import rag, image, crm, payments, intelligence
 from orchestrator import run_orchestrator
 from typing import Optional
 from pydantic import BaseModel
@@ -31,7 +31,7 @@ trace.set_tracer_provider(provider)
 
 app = FastAPI(title="TerraIQ FastAPI", version="0.1.0")
 
-# CORS – allow frontend on localhost and Vercel domain
+# CORS â€“ allow frontend on localhost and Vercel domain
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # adjust in production
@@ -47,6 +47,7 @@ app.include_router(rag.router, prefix="/rag", tags=["RAG"])
 app.include_router(image.router, prefix="/upload", tags=["Image"])
 app.include_router(crm.router, prefix="/crm", tags=["CRM"])
 app.include_router(payments.router, prefix="/payments", tags=["Payments"])
+app.include_router(intelligence.router, prefix="/intelligence", tags=["Enterprise Intelligence"])
 
 @app.get("/health")
 async def health_check():
@@ -62,3 +63,4 @@ async def orchestrate(request: OrchestrateRequest):
 # @app.get("/metrics")
 # async def metrics():
 #     return prometheus_exporter.metrics
+

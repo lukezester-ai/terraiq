@@ -64,3 +64,46 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+.data-stream {
+  position: absolute;
+  left: -30vw;
+  height: 1px;
+  width: 30vw;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.75), transparent);
+  box-shadow: 0 0 24px rgba(0, 212, 255, 0.28);
+  animation: terraiq-stream 5.8s linear infinite;
+}
+
+.data-stream-reverse {
+  left: auto;
+  right: -30vw;
+  background: linear-gradient(270deg, transparent, rgba(34, 197, 94, 0.62), transparent);
+  animation-name: terraiq-stream-reverse;
+}
+
+.animation-delay-700 {
+  animation-delay: 0.7s;
+}
+
+.animation-delay-1400 {
+  animation-delay: 1.4s;
+}
+
+.animation-delay-2100 {
+  animation-delay: 2.1s;
+}
+
+@keyframes terraiq-stream {
+  from { transform: translateX(0); opacity: 0; }
+  12% { opacity: 1; }
+  82% { opacity: 1; }
+  to { transform: translateX(160vw); opacity: 0; }
+}
+
+@keyframes terraiq-stream-reverse {
+  from { transform: translateX(0); opacity: 0; }
+  12% { opacity: 1; }
+  82% { opacity: 1; }
+  to { transform: translateX(-160vw); opacity: 0; }
+}

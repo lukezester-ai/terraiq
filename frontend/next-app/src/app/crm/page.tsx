@@ -21,35 +21,107 @@ type Inquiry = {
   };
 };
 
+const quickPrompts = [
+  "Направи оферта за 500 тона хлебна пшеница FOB Варна. Дай цена, риск, марж, аргументи за клиента и готов email.",
+  "Клиент иска царевица за износ. Какви данни да поискам, как да сметна цена и какви рискове да проверя?",
+  "Имам стопанство 1200 дка пшеница и слънчоглед. Направи оперативен план за следващите 30 дни.",
+  "Направи риск анализ: суша, болести, пазарна цена, логистика и плащане за сделка със зърно.",
+];
+
 export default function CRMDashboard() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aiStatus, setAiStatus] = useState("Свързване с TerraIQ AI...");
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
+  const contactEmail = "lukezester@gmail.com";
 
   useEffect(() => {
-    // Simulate fetching from FastAPI
-    setTimeout(() => {
+    async function loadDemoDeal() {
+      const demoInquiry = {
+        client_name: "AgroTrade Hub",
+        client_email: "buyers@agrotrade.eu",
+        requested_crop: "Wheat",
+        quantity_tons: 500,
+        destination: "Varna Port",
+      };
+
+      let generated = {
+        sales_analysis:
+          "Client profile is solid. Propose FOB terms at Varna Port. Include volume discount.",
+        finance_analysis:
+          "MATIF is 220 EUR/t. Transport to Varna is 15 EUR/t. Minimum acceptable price: 245 EUR/t.",
+        final_recommendation:
+          "SUBJECT: Offer for 500t Wheat FOB Varna\n\nDear AgroTrade Hub,\n\nBased on your inquiry, we can supply 500 tons of high-protein wheat delivered FOB Varna Port.\n\nPrice: 248 EUR/t.\nDelivery Window: Next week.\n\nPlease confirm if acceptable.",
+      };
+
+      try {
+        const res = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            context:
+              "Demo CRM deal: buyer AgroTrade Hub wants 500 tons wheat FOB Varna Port. Prepare sales analysis, finance analysis and a short offer email.",
+            query:
+              "Направи кратък търговски анализ, финансов анализ и готова оферта за клиента. Върни отговора с ясни секции.",
+          }),
+        });
+        const data = (await res.json()) as { answer?: string; error?: string };
+        if (!res.ok || !data.answer) throw new Error(data.error || "AI failed");
+        generated = {
+          sales_analysis: "Генерирано от TerraIQ AI.",
+          finance_analysis:
+            "AI анализът комбинира търговска логика, ориентировъчна цена, марж и следващо действие.",
+          final_recommendation: data.answer,
+        };
+        setAiStatus("TerraIQ AI е свързан и генерира тази оферта.");
+      } catch (error) {
+        console.error("[crm-ai]", error);
+        setAiStatus("AI връзката не отговори. Показан е резервен demo текст.");
+      }
+
       setInquiries([
         {
           id: "inq_17100001",
           timestamp: new Date().toISOString(),
           status: "Draft Ready",
-          inquiry: {
-            client_name: "AgroTrade Hub",
-            client_email: "buyers@agrotrade.eu",
-            requested_crop: "Wheat",
-            quantity_tons: 500,
-            destination: "Varna Port",
-          },
-          orchestrator_result: {
-            sales_analysis: "Client profile is solid. Propose FOB terms at Varna Port. Include volume discount.",
-            finance_analysis: "MATIF is 220 EUR/t. Transport to Varna is 15 EUR/t. Minimum acceptable price: 245 EUR/t.",
-            final_recommendation: "SUBJECT: Offer for 500t Wheat FOB Varna\n\nDear AgroTrade Hub,\n\nBased on your inquiry, we can supply 500 tons of high-protein wheat delivered FOB Varna Port. \n\nPrice: 248 EUR/t.\nDelivery Window: Next week.\n\nPlease confirm if acceptable."
-          }
+          inquiry: demoInquiry,
+          orchestrator_result: generated,
         }
       ]);
       setLoading(false);
-    }, 1000);
+    }
+
+    void loadDemoDeal();
   }, []);
+
+  const askTerraIq = async () => {
+    const q = question.trim();
+    if (!q) return;
+
+    setAsking(true);
+    setAnswer(null);
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: q,
+          context:
+            "User is working inside TerraIQ CRM. Available demo record: AgroTrade Hub requests 500 tons wheat FOB Varna Port. TerraIQ has no live market feed or real database connected yet. Act as a senior agri deal analyst and give operational next actions.",
+        }),
+      });
+      const data = (await res.json()) as { answer?: string; error?: string };
+      if (!res.ok || !data.answer) throw new Error(data.error || "AI failed");
+      setAnswer(data.answer);
+    } catch (error) {
+      console.error("[crm-ask-ai]", error);
+      setAnswer("Не успях да получа отговор от TerraIQ AI. Провери OpenAI настройките във Vercel и опитай пак.");
+    } finally {
+      setAsking(false);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-[var(--background)] p-8 font-sans text-[var(--foreground)]">
@@ -61,6 +133,7 @@ export default function CRMDashboard() {
           <div>
             <h1 className="text-2xl font-semibold tracking-wide">Commercial CRM</h1>
             <p className="text-[var(--secondary)] text-sm mt-1">Inbound Leads & AI Deal Strategies</p>
+            <p className="text-[var(--accent)] text-xs mt-2">{aiStatus}</p>
           </div>
         </header>
         
@@ -71,6 +144,61 @@ export default function CRMDashboard() {
           </div>
         ) : (
           <div className="grid gap-8">
+            <section className="glass-panel p-6 rounded-2xl">
+              <div className="mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-xl font-semibold text-white">Попитай TerraIQ AI</h2>
+                  <a
+                    href={`mailto:${contactEmail}?subject=TerraIQ%20CRM%20contact`}
+                    className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-xs font-semibold text-[var(--accent)] transition hover:bg-[var(--accent)] hover:text-black"
+                  >
+                    Жив контакт
+                  </a>
+                </div>
+                <p className="mt-1 text-sm text-[var(--secondary)]">
+                  Напиши въпрос за стопанство, оферта, цена, риск, логистика или клиент.
+                </p>
+              </div>
+              <div className="grid gap-3">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {quickPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => setQuestion(prompt)}
+                      className="rounded-xl border border-[var(--border-glass)] bg-white/[0.03] p-3 text-left text-xs leading-5 text-[var(--secondary)] transition hover:border-[var(--accent)] hover:text-white"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={question}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  rows={4}
+                  className="w-full rounded-xl border border-[var(--border-glass)] bg-black/30 p-4 text-sm text-white outline-none placeholder:text-[var(--secondary)] focus:border-[var(--accent)]"
+                  placeholder="Например: Направи оферта за 500 тона пшеница FOB Варна с цена и следващи действия..."
+                />
+                <button
+                  onClick={askTerraIq}
+                  disabled={asking || !question.trim()}
+                  className="w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#00bfff] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {asking ? "TerraIQ AI мисли..." : "Изпрати към TerraIQ AI"}
+                </button>
+                {answer ? (
+                  <div className="rounded-xl border border-[var(--border-glass)] bg-black/40 p-4">
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
+                      Отговор
+                    </div>
+                    <pre className="whitespace-pre-wrap font-sans text-sm leading-6 text-[var(--secondary)]">
+                      {answer}
+                    </pre>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
             {inquiries.map((inq) => (
               <div key={inq.id} className="glass-panel p-6 rounded-2xl flex flex-col gap-6">
                 
