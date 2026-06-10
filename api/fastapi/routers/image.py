@@ -1,30 +1,45 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
-import aio_pika
+﻿import base64
+import json
+import os
 import uuid
+
+import aio_pika
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 router = APIRouter()
 
+MAX_IMAGE_BYTES = int(os.getenv("MAX_IMAGE_UPLOAD_BYTES", "5242880"))
+RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
+
+
 async def get_rabbitmq_channel():
-    # Simple connection getter – in production use a proper connection pool
-    connection = await aio_pika.connect_robust("amqp://guest:guest@rabbitmq:5672/")
+    # Simple connection getter; production should use a shared connection pool.
+    connection = await aio_pika.connect_robust(RABBITMQ_URL)
     return await connection.channel()
+
 
 @router.post("/", summary="Upload image for AI analysis")
 async def upload_image(file: UploadFile = File(...), channel=Depends(get_rabbitmq_channel)):
-    if not file.content_type.startswith("image/"):
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
 
-    # Read file content (could be streamed for large files)
     content = await file.read()
-    # Prepare a message payload – we just send the raw bytes and a correlation id
+    if len(content) > MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail="Image is too large")
+
     correlation_id = str(uuid.uuid4())
+    payload = {
+        "image_bytes": base64.b64encode(content).decode("ascii"),
+        "filename": file.filename or f"{correlation_id}.png",
+        "content_type": file.content_type,
+    }
     message = aio_pika.Message(
-        body=content,
+        body=json.dumps(payload).encode("utf-8"),
         correlation_id=correlation_id,
-        headers={"filename": file.filename},
+        content_type="application/json",
+        headers={"filename": file.filename or ""},
         delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
     )
-    # Publish to a direct exchange named "image_processing"
     exchange = await channel.declare_exchange("image_processing", aio_pika.ExchangeType.DIRECT)
     await exchange.publish(message, routing_key="process")
     return {"status": "queued", "correlation_id": correlation_id}

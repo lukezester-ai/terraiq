@@ -8,6 +8,7 @@ opentelemetry-sdk
 opentelemetry-instrumentation-fastapi
 opentelemetry-exporter-prometheus
 aiokafka
+aio-pika
 neo4j
 clickhouse-driver
 langchain-core

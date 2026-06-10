@@ -21,6 +21,8 @@ import {
   Truck,
 } from "lucide-react";
 
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "";
+
 const flow = ["Data", "Analysis", "Risk", "Simulation", "Recommendation", "Action"];
 
 const risks = [
@@ -60,14 +62,32 @@ function Panel({ children, className = "" }: { children: React.ReactNode; classN
 export default function DemoPage() {
   const [running, setRunning] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [simulationError, setSimulationError] = useState<string | null>(null);
+  const [simulationStatus, setSimulationStatus] = useState<string | null>(null);
 
-  function runSimulation() {
+  async function runSimulation() {
     setRunning(true);
     setCompleted(false);
-    window.setTimeout(() => {
-      setRunning(false);
+    setSimulationError(null);
+    setSimulationStatus(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/intelligence/crisis-simulation/run`, {
+        method: "POST",
+      });
+      const data = (await response.json()) as { event_status?: string; status?: string; detail?: string };
+      if (!response.ok) {
+        throw new Error(data.detail || "Simulation failed");
+      }
+      setSimulationStatus(data.event_status || data.status || "completed");
       setCompleted(true);
-    }, 900);
+    } catch (error) {
+      console.error("[crisis-simulation]", error);
+      setSimulationError("Backend simulation is unavailable. Showing the demo flow with static seed data.");
+      setCompleted(true);
+    } finally {
+      setRunning(false);
+    }
   }
 
   return (
@@ -133,6 +153,16 @@ export default function DemoPage() {
         {(running || completed) && (
           <Panel className="border-cyan-300/35 bg-cyan-300/10">
             <div className="mb-4 flex items-center gap-2"><RadioTower className="text-cyan-200" /><h2 className="text-xl font-bold">Crisis Simulation Flow</h2></div>
+            {simulationStatus ? (
+              <p className="mb-4 rounded-lg border border-emerald-300/25 bg-emerald-300/10 p-3 text-sm font-semibold text-emerald-200">
+                Backend event status: {simulationStatus}
+              </p>
+            ) : null}
+            {simulationError ? (
+              <p className="mb-4 rounded-lg border border-amber-300/25 bg-amber-300/10 p-3 text-sm font-semibold text-amber-100">
+                {simulationError}
+              </p>
+            ) : null}
             <div className="grid gap-3 md:grid-cols-5">
               {eventSteps.map((step, index) => (
                 <div key={step} className="rounded-lg border border-cyan-300/25 bg-[#0B0F19] p-4 text-sm leading-6 text-slate-300">

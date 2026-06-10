@@ -13,6 +13,7 @@ from data_foundation import (
     run_risk_agent_demo,
     run_market_agent_demo,
     get_ai_decision_report,
+    run_crisis_simulation,
 )
 
 router = APIRouter()
@@ -100,3 +101,8 @@ async def market_agent_demo():
 @router.get("/decision-report/demo")
 async def decision_report_demo():
     return get_ai_decision_report()
+
+
+@router.post("/crisis-simulation/run")
+async def crisis_simulation_run():
+    return await run_crisis_simulation()

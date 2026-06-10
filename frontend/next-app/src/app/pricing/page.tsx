@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Check, ArrowRight } from "lucide-react";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function PricingPage() {
   const plans = [
@@ -48,6 +48,11 @@ export default function PricingPage() {
   ];
 
   const handleCheckout = async (planId: string) => {
+    if (!apiBaseUrl) {
+      alert("Плащанията още не са свързани към production backend.");
+      return;
+    }
+
     try {
       const response = await fetch(`${apiBaseUrl}/payments/create-checkout-session`, {
         method: "POST",

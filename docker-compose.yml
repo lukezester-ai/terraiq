@@ -40,6 +40,17 @@ services:
     ports:
       - "9092:9092"
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   neo4j:
     image: neo4j:5.15.0
     environment:
@@ -90,6 +101,7 @@ services:
       - neo4j
       - qdrant
       - clickhouse
+      - rabbitmq
     ports:
       - "8000:8000"
     environment:
@@ -102,6 +114,9 @@ services:
       - QDRANT_URL=http://qdrant:6333
       - CLICKHOUSE_HOST=clickhouse
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - FRONTEND_BASE_URL=http://localhost:3000
+      - CORS_ORIGINS=http://localhost:3000,https://terraiq.me,https://www.terraiq.me
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
 
   frontend:
     build:
@@ -112,7 +127,7 @@ services:
     depends_on:
       - fastapi
     environment:
-      - NEXT_PUBLIC_API_URL=http://fastapi:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
 
   worker:
     build:
@@ -121,10 +136,12 @@ services:
     depends_on:
       - kafka
       - postgres
+      - rabbitmq
     environment:
       - DATABASE_URL_ASYNC=postgresql+asyncpg://terraiq:terraiqpass@postgres:5432/terraiqdb
       - KAFKA_BROKER_URL=kafka:9092
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
 
 volumes:
   pgdata:

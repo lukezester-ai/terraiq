@@ -2,14 +2,11 @@ import os
 import stripe
 from fastapi import APIRouter, HTTPException, Request
 
-router = APIRouter(
-    prefix="/payments",
-    tags=["payments"]
-)
+router = APIRouter()
 
-# Use dummy keys for development/testing if real ones aren't set
-stripe.api_key = os.getenv("STRIPE_API_KEY", "sk_test_mock_secret_key")
-webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_mock_secret")
+stripe.api_key = os.getenv("STRIPE_API_KEY", "")
+webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000").rstrip("/")
 
 @router.post("/create-checkout-session")
 async def create_checkout_session(request: Request):
@@ -30,7 +27,9 @@ async def create_checkout_session(request: Request):
         
         amount = prices.get(plan_id, 9900)
         
-        # Create a Stripe Checkout Session
+        if not stripe.api_key:
+            raise HTTPException(status_code=503, detail="Stripe is not configured.")
+
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
@@ -45,13 +44,10 @@ async def create_checkout_session(request: Request):
                 'quantity': 1,
             }],
             mode='payment', # In real app, this would be 'subscription'
-            success_url='http://localhost:3000/crm?session_id={CHECKOUT_SESSION_ID}&success=true',
-            cancel_url='http://localhost:3000/pricing?canceled=true',
+            success_url=f'{frontend_base_url}/crm?session_id={{CHECKOUT_SESSION_ID}}&success=true',
+            cancel_url=f'{frontend_base_url}/pricing?canceled=true',
         )
         return {"checkout_url": session.url}
-    except stripe.error.AuthenticationError:
-        # Fallback for local development when real keys aren't provided
-        return {"checkout_url": f"https://checkout.stripe.com/pay/mock_session_for_{plan_id}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -63,10 +59,12 @@ async def stripe_webhook(request: Request):
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
     
+    if not webhook_secret:
+        raise HTTPException(status_code=503, detail="Stripe webhook secret is not configured.")
+
     try:
-        # In a real app we construct the event using webhook_secret
-        # event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
-        print("Webhook received from Stripe!")
+        event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+        print(f"Webhook received from Stripe: {event.get('type')}")
         return {"status": "success"}
     except Exception as e:
         print(f"Webhook error: {e}")

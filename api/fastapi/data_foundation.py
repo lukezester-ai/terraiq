@@ -562,3 +562,38 @@ def run_market_agent_demo() -> dict:
 
 def get_ai_decision_report() -> dict:
     return AI_DECISION_REPORT_SAMPLE
+
+
+async def run_crisis_simulation() -> dict:
+    event = {
+        "topic": "hailstorm.warning",
+        "farm_id": "terra_holding",
+        "severity": "high",
+        "message": "Hailstorm warning received for Terra Holding operating region.",
+    }
+
+    try:
+        from infrastructure.kafka_client import emit_event
+
+        await emit_event("hailstorm.warning", event)
+        event_status = "emitted"
+    except Exception as exc:
+        event_status = f"not_emitted: {exc}"
+
+    return {
+        "status": "completed",
+        "event": event,
+        "event_status": event_status,
+        "flow": [
+            "Kafka event: hailstorm.warning",
+            "Risk Agent analyzed climate, market, operations and cash-flow risk",
+            "Digital Twin simulated expected loss and alternative strategy",
+            "Finance Agent calculated profit delta and liquidity effect",
+            "Strategy Agent generated approval-ready recommendation",
+        ],
+        "seed_farm": TERRA_HOLDING_SEED,
+        "risk_agent": RISK_AGENT_SAMPLE,
+        "market_agent": MARKET_AGENT_SAMPLE,
+        "digital_twin": DIGITAL_TWIN_DEMO,
+        "decision_report": AI_DECISION_REPORT_SAMPLE,
+    }

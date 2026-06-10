@@ -5,7 +5,8 @@ import uuid
 from typing import Any
 
 import aio_pika
-from openai import OpenAI
+from openai import AsyncOpenAI
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
@@ -19,8 +20,7 @@ AsyncSessionLocal = sessionmaker(
     bind=engine, class_=AsyncSession, expire_on_commit=False
 )
 
-# OpenAI client (vision model)
-openai_client = OpenAI()
+openai_client = AsyncOpenAI()
 
 async def process_image(message: aio_pika.IncomingMessage) -> None:
     async with message.process():
@@ -55,7 +55,7 @@ async def process_image(message: aio_pika.IncomingMessage) -> None:
             VALUES (:id, :filename, :analysis, :correlation_id)
             """
             await session.execute(
-                insert_stmt,
+                text(insert_stmt),
                 {
                     "id": uuid.uuid4(),
                     "filename": filename,

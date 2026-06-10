@@ -1,7 +1,10 @@
 import asyncio
 import traceback
+import pytest
 from orchestrator import run_orchestrator, app_graph, AgentState
 from infrastructure.clickhouse_client import clickhouse_client
+
+pytestmark = pytest.mark.asyncio
 
 async def test_router_none_query():
     print("Running test_router_none_query...")

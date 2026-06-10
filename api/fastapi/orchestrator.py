@@ -8,7 +8,6 @@ from infrastructure.qdrant_client import qdrant_client
 from infrastructure.clickhouse_client import clickhouse_client
 from infrastructure.agrinexus_client import agrinexus_client
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
 
 class AgentState(TypedDict, total=False):
     farm_id: Optional[str]
@@ -21,6 +20,9 @@ class AgentState(TypedDict, total=False):
     sales_analysis: str
     final_recommendation: str
     next_agents: List[str]
+
+def get_llm():
+    return ChatOpenAI(model="gpt-4o-mini")
 
 async def router_node(state: AgentState) -> AgentState:
     print("Routing query...")
@@ -62,9 +64,8 @@ async def finance_agent(state: AgentState) -> AgentState:
         farm_topology = []
     
     prompt = f"Analyze the following query: {query}\nFarm Topology: {farm_topology}\nProvide a financial analysis."
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    
     try:
+        llm = get_llm()
         response = await llm.ainvoke(prompt)
         analysis = response.content
     except Exception as e:
@@ -79,7 +80,7 @@ async def risk_agent(state: AgentState) -> AgentState:
     if query is None:
         query = ""
     try:
-        llm = ChatOpenAI(model="gpt-4o-mini")
+        llm = get_llm()
         coord_prompt = f"Extract latitude and longitude from this text. Return only in format 'lat,lon'. If none, return '52.52,13.41'. Text: {query}"
         coord_response = await llm.ainvoke(coord_prompt)
         coords = coord_response.content.strip().split(',')
@@ -102,7 +103,7 @@ async def risk_agent(state: AgentState) -> AgentState:
         analysis = analysis_response.content
     except Exception as e:
         print(f"Error calling external API in risk_agent: {e}")
-        llm = ChatOpenAI(model="gpt-4o-mini")
+        llm = get_llm()
         try:
             analysis = (await llm.ainvoke(f"Provide a risk assessment for: {query}. Note: Weather data unavailable.")).content
         except:
@@ -123,13 +124,13 @@ async def market_agent(state: AgentState) -> AgentState:
         else:
             context = "No market data found."
             
-        llm = ChatOpenAI(model="gpt-4o-mini")
+        llm = get_llm()
         prompt = f"Analyze this query: {query}\nBased on market context: {context}\nProvide market analysis."
         response = await llm.ainvoke(prompt)
         analysis = response.content
     except Exception as e:
         print(f"Error calling Qdrant in market_agent: {e}")
-        llm = ChatOpenAI(model="gpt-4o-mini")
+        llm = get_llm()
         try:
             analysis = (await llm.ainvoke(f"Analyze market conditions for: {query}. (Data unavailable)")).content
         except:
@@ -148,13 +149,13 @@ async def operations_agent(state: AgentState) -> AgentState:
         health_data = await asyncio.to_thread(clickhouse_client.get_machine_health, farm_id=farm_id, machine_id="tractor_1")
         context = f"Machine health: {health_data}"
         
-        llm = ChatOpenAI(model="gpt-4o-mini")
+        llm = get_llm()
         prompt = f"Analyze operations for query: {query}. Health data: {context}. Provide operational analysis."
         response = await llm.ainvoke(prompt)
         analysis = response.content
     except Exception as e:
         print(f"Error calling ClickHouse in operations_agent: {e}")
-        llm = ChatOpenAI(model="gpt-4o-mini")
+        llm = get_llm()
         try:
             analysis = (await llm.ainvoke(f"Provide general operational guidance for query: {query}. Machinery data unavailable.")).content
         except:
@@ -168,7 +169,7 @@ async def compliance_agent(state: AgentState) -> AgentState:
     if query is None:
         query = ""
     try:
-        llm = ChatOpenAI(model="gpt-4o-mini")
+        llm = get_llm()
         prompt = f"Analyze compliance, EU agricultural regulations, and subsidies for query: {query}."
         response = await llm.ainvoke(prompt)
         analysis = response.content
@@ -192,7 +193,7 @@ async def sales_agent(state: AgentState) -> AgentState:
             
         contract_url = await agrinexus_client.draft_b2b_contract("AgriCorp Inc", "Wheat", 500, 320.50)
         
-        llm = ChatOpenAI(model="gpt-4o-mini")
+        llm = get_llm()
         prompt = (
             f"Analyze the incoming commercial inquiry: {query}. "
             f"Warehouse Inventory: {inventory}. "
@@ -224,9 +225,8 @@ async def strategy_agent(state: AgentState) -> AgentState:
         f"Compliance: {state.get('compliance_analysis', 'N/A')}\n"
         f"Sales/Trade: {state.get('sales_analysis', 'N/A')}\n"
     )
-    llm = ChatOpenAI(model="gpt-4o-mini")
-    
     try:
+        llm = get_llm()
         response = await llm.ainvoke(prompt)
         recommendation = response.content
     except Exception as e:

@@ -1,4 +1,6 @@
-﻿from fastapi import FastAPI
+﻿import os
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # OpenTelemetry imports
@@ -31,10 +33,19 @@ trace.set_tracer_provider(provider)
 
 app = FastAPI(title="TerraIQ FastAPI", version="0.1.0")
 
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,https://terraiq.me,https://www.terraiq.me",
+    ).split(",")
+    if origin.strip()
+]
+
 # CORS â€“ allow frontend on localhost and Vercel domain
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # adjust in production
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -63,4 +74,6 @@ async def orchestrate(request: OrchestrateRequest):
 # @app.get("/metrics")
 # async def metrics():
 #     return prometheus_exporter.metrics
+
+
 
