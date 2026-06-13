@@ -7,6 +7,7 @@ from infrastructure.kafka_client import emit_event
 from infrastructure.qdrant_client import qdrant_client
 from infrastructure.clickhouse_client import clickhouse_client
 from infrastructure.agrinexus_client import agrinexus_client
+from infrastructure.shadownet_client import shadow_net
 from langchain_openai import ChatOpenAI
 
 class AgentState(TypedDict, total=False):
@@ -112,7 +113,7 @@ async def risk_agent(state: AgentState) -> AgentState:
     return {"risk_analysis": analysis}
 
 async def market_agent(state: AgentState) -> AgentState:
-    print("Market Agent analyzing...")
+    print("Market Agent analyzing (with ShadowNet Proxies)...")
     query = state.get("query", "")
     if query is None:
         query = ""
@@ -124,12 +125,17 @@ async def market_agent(state: AgentState) -> AgentState:
         else:
             context = "No market data found."
             
+        # --- SHADOWNET INTEGRATION ---
+        shadow_net_data = await shadow_net.scrape_competitor_pricing(query)
+        context += f"\n[ShadowNet Rotating Proxy Report]: {shadow_net_data}"
+        # -----------------------------
+            
         llm = get_llm()
-        prompt = f"Analyze this query: {query}\nBased on market context: {context}\nProvide market analysis."
+        prompt = f"Analyze this query: {query}\nBased on market context and real-time scraped competitor data: {context}\nProvide a highly competitive market analysis."
         response = await llm.ainvoke(prompt)
         analysis = response.content
     except Exception as e:
-        print(f"Error calling Qdrant in market_agent: {e}")
+        print(f"Error in market_agent: {e}")
         llm = get_llm()
         try:
             analysis = (await llm.ainvoke(f"Analyze market conditions for: {query}. (Data unavailable)")).content
@@ -180,7 +186,7 @@ async def compliance_agent(state: AgentState) -> AgentState:
     return {"compliance_analysis": analysis}
 
 async def sales_agent(state: AgentState) -> AgentState:
-    print("Sales Agent analyzing...")
+    print("Sales Agent analyzing (with ShadowNet Intelligence)...")
     farm_id = state.get("farm_id", "farm_1")
     query = state.get("query", "")
     if query is None:
@@ -193,13 +199,18 @@ async def sales_agent(state: AgentState) -> AgentState:
             
         contract_url = await agrinexus_client.draft_b2b_contract("AgriCorp Inc", "Wheat", 500, 320.50)
         
+        # --- SHADOWNET INTEGRATION ---
+        shadow_net_market_intel = await shadow_net.scrape_competitor_pricing(query)
+        # -----------------------------
+        
         llm = get_llm()
         prompt = (
             f"Analyze the incoming commercial inquiry: {query}. "
             f"Warehouse Inventory: {inventory}. "
+            f"ShadowNet Proxy Intelligence (Competitor Data): {shadow_net_market_intel}. "
             f"Generated Draft Contract URL: {contract_url}\n"
             "You are the Chief Sales Agent. Draft a B2B sales strategy. "
-            "Address availability, delivery terms, and reference the drafted contract."
+            "Address availability, delivery terms, outsmart competitors based on ShadowNet data, and reference the drafted contract."
         )
         response = await llm.ainvoke(prompt)
         analysis = response.content
