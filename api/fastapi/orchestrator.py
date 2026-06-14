@@ -113,7 +113,7 @@ async def risk_agent(state: AgentState) -> AgentState:
     return {"risk_analysis": analysis}
 
 async def market_agent(state: AgentState) -> AgentState:
-    print("Market Agent analyzing (with ShadowNet Proxies)...")
+    print("Market Agent analyzing...")
     query = state.get("query", "")
     if query is None:
         query = ""
@@ -125,13 +125,11 @@ async def market_agent(state: AgentState) -> AgentState:
         else:
             context = "No market data found."
             
-        # --- SHADOWNET INTEGRATION ---
-        shadow_net_data = await shadow_net.scrape_competitor_pricing(query)
-        context += f"\n[ShadowNet Rotating Proxy Report]: {shadow_net_data}"
-        # -----------------------------
+        competitor_data = await shadow_net.scrape_competitor_pricing(query)
+        context += f"\n[Competitor Intelligence]: {competitor_data}"
             
         llm = get_llm()
-        prompt = f"Analyze this query: {query}\nBased on market context and real-time scraped competitor data: {context}\nProvide a highly competitive market analysis."
+        prompt = f"Analyze this query: {query}\nBased on market context and available competitor intelligence: {context}\nProvide a highly competitive market analysis."
         response = await llm.ainvoke(prompt)
         analysis = response.content
     except Exception as e:
@@ -186,7 +184,7 @@ async def compliance_agent(state: AgentState) -> AgentState:
     return {"compliance_analysis": analysis}
 
 async def sales_agent(state: AgentState) -> AgentState:
-    print("Sales Agent analyzing (with ShadowNet Intelligence)...")
+    print("Sales Agent analyzing...")
     farm_id = state.get("farm_id", "farm_1")
     query = state.get("query", "")
     if query is None:
@@ -199,18 +197,16 @@ async def sales_agent(state: AgentState) -> AgentState:
             
         contract_url = await agrinexus_client.draft_b2b_contract("AgriCorp Inc", "Wheat", 500, 320.50)
         
-        # --- SHADOWNET INTEGRATION ---
-        shadow_net_market_intel = await shadow_net.scrape_competitor_pricing(query)
-        # -----------------------------
+        competitor_market_intel = await shadow_net.scrape_competitor_pricing(query)
         
         llm = get_llm()
         prompt = (
             f"Analyze the incoming commercial inquiry: {query}. "
             f"Warehouse Inventory: {inventory}. "
-            f"ShadowNet Proxy Intelligence (Competitor Data): {shadow_net_market_intel}. "
+            f"Competitor Intelligence: {competitor_market_intel}. "
             f"Generated Draft Contract URL: {contract_url}\n"
             "You are the Chief Sales Agent. Draft a B2B sales strategy. "
-            "Address availability, delivery terms, outsmart competitors based on ShadowNet data, and reference the drafted contract."
+            "Address availability, delivery terms, position the offer using available competitor intelligence, and reference the drafted contract."
         )
         response = await llm.ainvoke(prompt)
         analysis = response.content

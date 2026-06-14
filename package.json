@@ -1,0 +1,14 @@
+{
+  "name": "terraiq",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend/next-app run dev -- --webpack",
+    "build": "npm --prefix frontend/next-app run build",
+    "start": "npm --prefix frontend/next-app run start",
+    "lint": "npm --prefix frontend/next-app run lint"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

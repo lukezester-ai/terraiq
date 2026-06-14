@@ -1,27 +1,45 @@
+import os
+from typing import Any
+
 import httpx
-import asyncio
+
 
 class MarketIngestionService:
     """
-    Pulls market prices (commodities, fertilizers, currencies).
-    Currently using Yahoo Finance (yfinance) endpoints or public mocked financial APIs.
+    Pulls market prices from a configured HTTP provider.
+    MARKET_PRICE_API_URL may include {symbol}, for example:
+    https://provider.example/prices?symbol={symbol}
     """
-    def __init__(self):
-        # We will use a public endpoint for MVP, e.g. a mocked Alpha Vantage or Yahoo
-        pass
 
-    async def fetch_commodity_price(self, symbol: str = "ZW=F"):
-        """
-        Fetch the current price of Wheat (ZW=F) or Corn (ZC=F).
-        For production, this would hit Bloomberg or Alpha Vantage.
-        """
-        # Simulating API call for now to prevent rate limiting on free endpoints
-        await asyncio.sleep(0.5)
-        mock_prices = {
-            "ZW=F": {"name": "Wheat Futures", "price": 540.25, "currency": "USD"},
-            "ZC=F": {"name": "Corn Futures", "price": 430.50, "currency": "USD"},
-            "FERT": {"name": "Urea Fertilizer", "price": 310.00, "currency": "USD"}
+    def __init__(self):
+        self.api_url = os.getenv("MARKET_PRICE_API_URL", "").strip()
+        self.api_key = os.getenv("MARKET_PRICE_API_KEY", "").strip()
+        self.timeout_seconds = float(os.getenv("MARKET_PRICE_TIMEOUT_SECONDS", "8"))
+
+    async def fetch_commodity_price(self, symbol: str = "ZW=F") -> dict[str, Any]:
+        if not self.api_url:
+            return {
+                "symbol": symbol,
+                "status": "not_configured",
+                "message": "MARKET_PRICE_API_URL is not configured.",
+            }
+
+        url = self.api_url.replace("{symbol}", symbol)
+        headers = {"Accept": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+
+        async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+
+        return {
+            "symbol": symbol,
+            "status": "live",
+            "provider_url": self.api_url,
+            "data": data,
         }
-        return mock_prices.get(symbol, {"price": 0.0})
+
 
 market_ingest = MarketIngestionService()

@@ -1,6 +1,12 @@
 from alembic import op
 import sqlalchemy as sa
 
+revision = "20230605_create_image_results"
+down_revision = "20230605_create_rag_audit"
+branch_labels = None
+depends_on = None
+
+
 def upgrade():
     op.create_table(
         "image_results",
@@ -10,6 +16,7 @@ def upgrade():
         sa.Column("correlation_id", sa.String(length=36), nullable=False, unique=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
+
 
 def downgrade():
     op.drop_table("image_results")

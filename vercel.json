@@ -1,15 +1,7 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/fastapi/main.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "api/fastapi/main.py"
-    }
-  ]
+  "installCommand": "npm --prefix frontend/next-app ci",
+  "buildCommand": "npm --prefix frontend/next-app run build",
+  "outputDirectory": "frontend/next-app/.next",
+  "devCommand": "npm --prefix frontend/next-app run dev -- --webpack"
 }

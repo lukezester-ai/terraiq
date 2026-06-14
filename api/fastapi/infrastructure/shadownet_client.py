@@ -1,33 +1,35 @@
-import asyncio
-import random
+import os
+from typing import Any
 
-class ShadowNetClient:
-    """
-    ShadowNet Proxy Infrastructure.
-    Powered by Rotating Residential Proxies for undetectable web scraping and market intelligence.
-    Formerly known as Webshare.
-    """
+import httpx
+
+
+class CompetitorIntelligenceClient:
+    """Fetches competitor/market intelligence from a configured compliant provider."""
+
     def __init__(self):
-        self.proxy_pool_size = 80000000 # 80M residential IPs
-        
-    async def scrape_competitor_pricing(self, product_query: str) -> str:
-        # Simulate connecting through a rotating residential proxy
-        proxy_ip = f"{random.randint(1, 255)}.{random.randint(1, 255)}.{random.randint(1, 255)}.{random.randint(1, 255)}"
-        print(f"[ShadowNet] Routing scraping request for '{product_query}' through Residential IP {proxy_ip}...")
-        await asyncio.sleep(1) # Simulate network delay
-        
-        # Mock data return
-        mock_prices = {
-            "wheat": "€310.00/ton",
-            "corn": "€280.00/ton",
-            "tractor": "John Deere S780: €450,000",
-            "fertilizer": "Urea 46%: €420.00/ton"
-        }
-        
-        for key, value in mock_prices.items():
-            if key in product_query.lower():
-                return f"ShadowNet Intelligence: Scraped competitor price is {value}. Data gathered using undetectable residential IP {proxy_ip}."
-                
-        return f"ShadowNet Intelligence: General market data gathered successfully via proxy {proxy_ip}."
+        self.api_url = os.getenv("COMPETITOR_INTEL_API_URL", "").strip()
+        self.api_key = os.getenv("COMPETITOR_INTEL_API_KEY", "").strip()
+        self.timeout_seconds = float(os.getenv("COMPETITOR_INTEL_TIMEOUT_SECONDS", "8"))
 
-shadow_net = ShadowNetClient()
+    async def scrape_competitor_pricing(self, product_query: str) -> str:
+        if not self.api_url:
+            return "Competitor intelligence unavailable: COMPETITOR_INTEL_API_URL is not configured."
+
+        headers = {"Accept": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+
+        async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+            response = await client.get(
+                self.api_url,
+                params={"query": product_query},
+                headers=headers,
+            )
+            response.raise_for_status()
+            data: dict[str, Any] = response.json()
+
+        return f"Competitor intelligence provider response: {data}"
+
+
+shadow_net = CompetitorIntelligenceClient()
