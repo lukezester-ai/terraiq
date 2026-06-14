@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { motion, type Variants } from "framer-motion";
 import {
@@ -18,6 +18,7 @@ import {
   FileSearch,
   Gauge,
   GitBranch,
+  Globe,
   Landmark,
   LineChart,
   LockKeyhole,
@@ -30,6 +31,7 @@ import {
   Truck,
 } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 const contactEmail = "lukezester@gmail.com";
 
@@ -43,12 +45,7 @@ const itemVariants: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-const executiveKpis = [
-  { label: "Expected Profit", value: "EUR 2.4M", detail: "current season", icon: CircleDollarSign, state: "text-emerald-300" },
-  { label: "Risk Index", value: "23%", detail: "low exposure", icon: Gauge, state: "text-cyan-300" },
-  { label: "Strategic Actions", value: "4", detail: "ready for review", icon: ClipboardCheck, state: "text-amber-300" },
-  { label: "Cash Flow", value: "+12.8%", detail: "healthy", icon: LineChart, state: "text-emerald-300" },
-];
+// executiveKpis moved inside component for translations
 
 const chartBars = [38, 72, 54, 88, 48, 66, 92, 58, 76, 44, 84, 64];
 
@@ -106,6 +103,15 @@ function DataField() {
 }
 
 export default function LandingPage() {
+  const { t, i18n } = useTranslation();
+
+  const executiveKpis = [
+    { label: t('kpi.expected_profit'), value: "EUR 2.4M", detail: t('kpi.expected_profit_desc'), icon: CircleDollarSign, state: "text-emerald-300" },
+    { label: t('kpi.risk_index'), value: "23%", detail: t('kpi.risk_index_desc'), icon: Gauge, state: "text-cyan-300" },
+    { label: t('kpi.strategic_actions'), value: "4", detail: t('kpi.strategic_actions_desc'), icon: ClipboardCheck, state: "text-amber-300" },
+    { label: t('kpi.cash_flow'), value: "+12.8%", detail: t('kpi.cash_flow_desc'), icon: LineChart, state: "text-emerald-300" },
+  ];
+  
   return (
     <main className="min-h-screen bg-[#0B0F19] text-[#F8FAFC]">
       <section className="relative min-h-screen overflow-hidden border-b border-[#243041]">
@@ -116,52 +122,62 @@ export default function LandingPage() {
             <span className="text-lg font-bold tracking-tight">TerraIQ</span>
           </Link>
           <div className="hidden items-center gap-2 md:flex">
-            <Link href="/demo" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white">MVP Demo</Link>
-            <Link href="/crm" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white">Workspace</Link>
-            <Link href="/pricing" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white">Plans</Link>
-            <Link href="/admin" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white">Admin</Link>
+            <Link href="/demo" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white">{t('nav.demo')}</Link>
+            <Link href="/crm" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white">{t('nav.workspace')}</Link>
+            <Link href="/pricing" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white">{t('nav.plans')}</Link>
+            <Link href="/admin" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white">{t('nav.admin')}</Link>
           </div>
-          <a
-            href={`mailto:${contactEmail}?subject=TerraIQ%20demo%20request`}
-            className="inline-flex items-center gap-2 rounded-lg border border-cyan-300/35 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300 hover:text-[#0B0F19]"
-          >
-            Request Demo
-            <ExternalLink size={16} />
-          </a>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => i18n.changeLanguage(i18n.language === 'bg' ? 'en' : 'bg')}
+              className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-cyan-300 transition-colors bg-[#131A26] px-2 py-1.5 rounded-md border border-[#243041]"
+            >
+              <Globe size={14} />
+              <span className={i18n.language !== 'bg' ? 'text-cyan-300' : ''}>EN</span>
+              <span className="opacity-50">|</span>
+              <span className={i18n.language === 'bg' ? 'text-cyan-300' : ''}>BG</span>
+            </button>
+            <a
+              href={`mailto:${contactEmail}?subject=TerraIQ%20demo%20request`}
+              className="inline-flex items-center gap-2 rounded-lg border border-cyan-300/35 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300 hover:text-[#0B0F19]"
+            >
+              {t('nav.request_demo')}
+              <ExternalLink size={16} />
+            </a>
+          </div>
         </nav>
 
         <div className="relative z-10 mx-auto flex min-h-[calc(100vh-84px)] max-w-7xl items-center px-5 py-12 sm:px-8">
           <motion.div initial="hidden" animate="visible" variants={containerVariants} className="mx-auto max-w-5xl text-center">
             <motion.div variants={itemVariants} className="mx-auto mb-8 flex w-fit items-center gap-3 rounded-full border border-[#243041] bg-[#131A26]/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200 backdrop-blur">
               <Network size={15} />
-              Strategic Operating System
+              {t('hero.subtitle')}
             </motion.div>
             <motion.div variants={itemVariants} className="mx-auto mb-7 flex justify-center">
               <LogoMark />
             </motion.div>
             <motion.h1 variants={itemVariants} className="text-6xl font-black tracking-tight sm:text-7xl lg:text-8xl">
-              Terra<span className="text-cyan-300 glow-text">IQ</span>
+              {t('hero.title')}<span className="text-cyan-300 glow-text">{t('hero.title_hl')}</span>
             </motion.h1>
             <motion.p variants={itemVariants} className="mt-5 text-2xl font-semibold text-slate-200 sm:text-3xl">
-              The Intelligence Layer<br className="sm:hidden" /> For Modern Agriculture
+              {t('hero.desc1')}<br className="sm:hidden" /> {t('hero.desc2')}
             </motion.p>
             <motion.p variants={itemVariants} className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-400">
-              Transform Data Into Decisions. TerraIQ combines data fabric, knowledge graph,
-              agent mesh, digital twin and executive intelligence into one decision center.
+              {t('hero.body')}
             </motion.p>
             <motion.div variants={itemVariants} className="mt-10 flex flex-wrap justify-center gap-3">
               <a
                 href={`mailto:${contactEmail}?subject=TerraIQ%20demo%20request`}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#00D4FF] px-6 py-4 font-bold text-[#0B0F19] transition hover:bg-cyan-200"
               >
-                Request Demo
+                {t('hero.btn_request')}
                 <ArrowRight size={18} />
               </a>
               <Link
                 href="/demo"
                 className="inline-flex items-center gap-2 rounded-lg border border-[#243041] bg-[#131A26]/70 px-6 py-4 font-bold text-white transition hover:border-cyan-300/70 hover:text-cyan-200"
               >
-                View MVP Demo
+                {t('hero.btn_demo')}
                 <Sparkles size={18} />
               </Link>
             </motion.div>
@@ -172,13 +188,13 @@ export default function LandingPage() {
       <section id="platform" className="mx-auto grid max-w-7xl gap-6 px-5 py-14 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">Executive Dashboard</p>
-            <h2 className="mt-3 text-3xl font-bold sm:text-4xl">TerraIQ Executive Center</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">Core indicators for the current season. Investors should see business value first, not infrastructure noise.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">{t('platform.kpi_title')}</p>
+            <h2 className="mt-3 text-3xl font-bold sm:text-4xl">{t('platform.title')}</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">{t('platform.desc')}</p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-200">
             <CheckCircle2 size={16} />
-            Decision layer online
+            {t('platform.status')}
           </span>
         </div>
 
