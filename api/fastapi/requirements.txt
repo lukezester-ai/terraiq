@@ -19,7 +19,3 @@ filelock
 langgraph
 stripe
 openai
-weasyprint
-pydub
-SpeechRecognition
-pyttsx3
