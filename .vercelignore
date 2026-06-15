@@ -1,0 +1,18 @@
+﻿# Backend services are deployed separately. If Vercel receives api/fastapi,
+# it tries to package Python functions and exceeds the 500 MB Lambda limit.
+api/
+ai/
+event/
+infra/
+integrations/
+mobile/
+observability/
+security/
+data/
+
+# Local archives and runtime artifacts
+TerraIQ.rar
+*.pyc
+__pycache__/
+.pytest_cache/
+.env
