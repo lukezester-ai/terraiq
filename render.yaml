@@ -1,0 +1,77 @@
+services:
+  - type: web
+    name: terraiq-api
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    branch: main
+    autoDeployTrigger: commit
+    dockerfilePath: api/fastapi/Dockerfile
+    dockerContext: api/fastapi
+    healthCheckPath: /health
+    envVars:
+      - key: CORS_ORIGINS
+        value: https://terraiq.me,https://www.terraiq.me,https://terraiq-web.onrender.com,http://localhost:3000
+      - key: FRONTEND_BASE_URL
+        value: https://terraiq.me
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: QDRANT_URL
+        sync: false
+      - key: NEO4J_URI
+        sync: false
+      - key: NEO4J_USER
+        sync: false
+      - key: NEO4J_PASSWORD
+        sync: false
+      - key: CLICKHOUSE_HOST
+        sync: false
+      - key: CLICKHOUSE_USER
+        sync: false
+      - key: CLICKHOUSE_PASSWORD
+        sync: false
+      - key: CLICKHOUSE_DB
+        sync: false
+      - key: KAFKA_BROKER_URL
+        sync: false
+      - key: RABBITMQ_URL
+        sync: false
+      - key: STRIPE_API_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_START_PRICE_ID
+        sync: false
+      - key: STRIPE_BUSINESS_PRICE_ID
+        sync: false
+      - key: STRIPE_ENTERPRISE_PRICE_ID
+        sync: false
+      - key: MAX_IMAGE_UPLOAD_BYTES
+        value: 5242880
+
+  - type: web
+    name: terraiq-web
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    branch: main
+    autoDeployTrigger: commit
+    dockerfilePath: frontend/next-app/Dockerfile
+    dockerContext: frontend/next-app
+    healthCheckPath: /
+    domains:
+      - terraiq.me
+      - www.terraiq.me
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://terraiq-api.onrender.com
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o
