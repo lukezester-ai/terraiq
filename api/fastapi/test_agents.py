@@ -66,6 +66,8 @@ async def custom_mock_ainvoke(prompt, *args, **kwargs):
         return AIMessage(content="Mocked Finance Analysis")
     elif "B2B sales strategy" in prompt_str:
         return AIMessage(content="Mocked Sales Analysis with Contract")
+    elif "AgriNexus.Law" in prompt_str or "Official context from AgriNexus.Law" in prompt_str:
+        return AIMessage(content="Mocked Compliance Analysis with AgriNexus.Law context")
     return AIMessage(content="Mocked Default Analysis")
 
 @pytest.mark.asyncio
@@ -101,12 +103,14 @@ async def test_run_orchestrator_all_agents():
     with patch("orchestrator.neo4j_client.get_farm_topology", new_callable=AsyncMock) as mock_get_farm_topology, \
          patch("orchestrator.emit_event", new_callable=AsyncMock) as mock_emit_event, \
          patch("orchestrator.ChatOpenAI.ainvoke", new_callable=AsyncMock) as mock_ainvoke, \
+         patch("orchestrator.agrinexus_client.fetch_compliance_context", new_callable=AsyncMock) as mock_law, \
          patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_httpx_get, \
          patch("orchestrator.clickhouse_client.get_machine_health") as mock_clickhouse, \
          patch.object(qdrant_client, "search_market_data", wraps=qdrant_client.search_market_data) as mock_qdrant_search:
         
         mock_get_farm_topology.return_value = [{"field_name": "Field A", "crop_name": "Wheat", "area": 100}]
         mock_ainvoke.side_effect = custom_mock_ainvoke
+        mock_law.return_value = "Mock AgriNexus.Law: ДФЗ срокове за директни плащания."
         
         mock_response = MagicMock()
         mock_response.status_code = 200

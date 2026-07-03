@@ -172,15 +172,27 @@ async def compliance_agent(state: AgentState) -> AgentState:
     query = state.get("query", "")
     if query is None:
         query = ""
+
+    law_context = await agrinexus_client.fetch_compliance_context(query)
+
     try:
         llm = get_llm()
-        prompt = f"Analyze compliance, EU agricultural regulations, and subsidies for query: {query}."
+        prompt = (
+            f"Analyze EU/Bulgarian agricultural compliance, subsidies (ДФЗ, ОСП) "
+            f"and regulations for this query:\n{query}\n\n"
+            f"Official context from AgriNexus.Law document archive:\n{law_context}\n\n"
+            "Cite specific documents or sources when available. "
+            "If context is missing, state assumptions clearly."
+        )
         response = await llm.ainvoke(prompt)
         analysis = response.content
     except Exception as e:
         print(f"Error calling LLM in compliance_agent: {e}")
-        analysis = "Error generating compliance analysis."
-        
+        analysis = (
+            "Compliance analysis unavailable. "
+            f"AgriNexus.Law context: {law_context[:500]}"
+        )
+
     return {"compliance_analysis": analysis}
 
 async def sales_agent(state: AgentState) -> AgentState:
@@ -295,6 +307,8 @@ async def run_orchestrator(query: str, farm_id: str = "farm_1") -> dict:
         "risk_analysis": "",
         "market_analysis": "",
         "operations_analysis": "",
+        "compliance_analysis": "",
+        "sales_analysis": "",
         "final_recommendation": "",
         "next_agents": []
     }
