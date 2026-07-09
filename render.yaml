@@ -6,8 +6,8 @@ services:
     region: frankfurt
     branch: main
     autoDeployTrigger: commit
-    dockerfilePath: api/fastapi/Dockerfile
-    dockerContext: api/fastapi
+    dockerfilePath: ./api/fastapi/Dockerfile
+    dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: CORS_ORIGINS
@@ -62,8 +62,8 @@ services:
     region: frankfurt
     branch: main
     autoDeployTrigger: commit
-    dockerfilePath: frontend/next-app/Dockerfile
-    dockerContext: frontend/next-app
+    dockerfilePath: ./frontend/next-app/Dockerfile
+    dockerContext: .
     healthCheckPath: /
     domains:
       - terraiq.me
