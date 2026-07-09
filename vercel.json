@@ -1,9 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "frontend/next-app/package.json",
-      "use": "@vercel/next"
-    }
-  ]
+  "buildCommand": "cd frontend/next-app && npm run build",
+  "outputDirectory": "frontend/next-app/.next",
+  "installCommand": "cd frontend/next-app && npm install",
+  "framework": null,
+  "devCommand": "cd frontend/next-app && npm run dev"
 }
