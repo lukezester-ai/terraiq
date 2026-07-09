@@ -1,7 +1,8 @@
 {
   "version": 2,
-  "installCommand": "npm ci && npm --prefix frontend/next-app ci",
-  "buildCommand": "npm --prefix frontend/next-app run build",
+  "installCommand": "cd frontend/next-app && npm ci",
+  "buildCommand": "cd frontend/next-app && npm run build",
   "outputDirectory": "frontend/next-app/.next",
-  "devCommand": "npm --prefix frontend/next-app run dev -- --webpack"
+  "devCommand": "cd frontend/next-app && npm run dev",
+  "framework": "nextjs"
 }
