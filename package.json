@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm --prefix frontend/next-app run dev -- --webpack",
+    "dev": "npm --prefix frontend/next-app run dev",
     "build": "npm --prefix frontend/next-app run build",
     "start": "npm --prefix frontend/next-app run start",
     "lint": "npm --prefix frontend/next-app run lint"

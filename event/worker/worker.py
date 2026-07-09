@@ -49,7 +49,17 @@ async def process_image(message: aio_pika.IncomingMessage) -> None:
 
         # Store result in DB (simple table placeholder)
         async with AsyncSessionLocal() as session:
-            # Assuming a table `image_results` exists with columns id, filename, analysis, correlation_id
+            # Ensure table exists
+            await session.execute(
+                text("""
+                CREATE TABLE IF NOT EXISTS image_results (
+                    id UUID PRIMARY KEY,
+                    filename TEXT,
+                    analysis TEXT,
+                    correlation_id TEXT
+                )
+                """)
+            )
             insert_stmt = """
             INSERT INTO image_results (id, filename, analysis, correlation_id)
             VALUES (:id, :filename, :analysis, :correlation_id)

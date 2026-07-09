@@ -45,7 +45,7 @@ async def seed_neo4j_knowledge_graph():
 
 async def seed_clickhouse_telemetry():
     print("[ClickHouse] Initializing Time-Series Telemetry Table...")
-    clickhouse_client.init_db()
+    clickhouse_client.init_schema()
     
     print("[ClickHouse] Generating 30 days of high-frequency IoT data...")
     now = datetime.utcnow()
@@ -90,7 +90,7 @@ async def seed_clickhouse_telemetry():
         current_time += timedelta(minutes=15) # Data point every 15 mins
         
     print(f"[ClickHouse] Writing {len(data_points)} telemetry records...")
-    clickhouse_client.insert_telemetry(data_points)
+    clickhouse_client.insert_telemetry_batch(data_points)
     print("[ClickHouse] Telemetry Seeding Complete.")
 
 async def main():

@@ -23,7 +23,10 @@ class DigitalTwinSimulator:
         # 2. Analyze historical hardware/telemetry resilience from ClickHouse
         # In a real scenario, we loop through all machines deployed on the farm.
         # Mocking a machine ID here for the twin execution.
-        machine_health = clickhouse_client.get_machine_health(farm_id=farm_id, machine_id="tractor_x9_001")
+        import asyncio
+        machine_health = await asyncio.to_thread(
+            clickhouse_client.get_machine_health, farm_id=farm_id, machine_id="tractor_x9_001"
+        )
         
         # 3. Apply Simulation Logic (Mocked AI Prediction)
         # Here LangChain/LangGraph would actually use an LLM with RAG

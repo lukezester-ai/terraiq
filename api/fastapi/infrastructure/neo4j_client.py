@@ -5,12 +5,26 @@ NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "terraiqpass")
 
+
 class Neo4jClient:
     def __init__(self):
-        self.driver = AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        # FIX #7: Use lazy initialization — do NOT connect at import time.
+        # The driver is created on first use, so importing this module does not
+        # require a live Neo4j instance (important for testing and cold starts).
+        self._driver = None
+
+    @property
+    def driver(self):
+        if self._driver is None:
+            self._driver = AsyncGraphDatabase.driver(
+                NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)
+            )
+        return self._driver
 
     async def close(self):
-        await self.driver.close()
+        if self._driver is not None:
+            await self._driver.close()
+            self._driver = None
 
     async def init_schema(self):
         """
@@ -60,5 +74,6 @@ class Neo4jClient:
             result = await session.run(query, farm_id=farm_id)
             records = await result.data()
             return records
+
 
 neo4j_client = Neo4jClient()

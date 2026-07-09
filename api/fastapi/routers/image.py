@@ -12,9 +12,19 @@ MAX_IMAGE_BYTES = int(os.getenv("MAX_IMAGE_UPLOAD_BYTES", "5242880"))
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
 
 
+# Global connection pool to prevent connection leaks
+_rabbitmq_connection = None
+
+
+async def get_rabbitmq_connection():
+    global _rabbitmq_connection
+    if _rabbitmq_connection is None or _rabbitmq_connection.is_closed:
+        _rabbitmq_connection = await aio_pika.connect_robust(RABBITMQ_URL)
+    return _rabbitmq_connection
+
+
 async def get_rabbitmq_channel():
-    # Simple connection getter; production should use a shared connection pool.
-    connection = await aio_pika.connect_robust(RABBITMQ_URL)
+    connection = await get_rabbitmq_connection()
     return await connection.channel()
 
 
@@ -42,4 +52,5 @@ async def upload_image(file: UploadFile = File(...), channel=Depends(get_rabbitm
     )
     exchange = await channel.declare_exchange("image_processing", aio_pika.ExchangeType.DIRECT)
     await exchange.publish(message, routing_key="process")
+    await channel.close()
     return {"status": "queued", "correlation_id": correlation_id}

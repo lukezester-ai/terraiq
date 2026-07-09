@@ -1,4 +1,4 @@
-﻿import os
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +13,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from routers import rag, image, crm, payments, intelligence
 from orchestrator import run_orchestrator
+from infrastructure.kafka_client import close_kafka_producer
 from typing import Optional
 from pydantic import BaseModel
 
@@ -42,7 +43,7 @@ cors_origins = [
     if origin.strip()
 ]
 
-# CORS â€“ allow frontend on localhost and Vercel domain
+# CORS — allow frontend on localhost and Vercel domain
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
@@ -70,10 +71,13 @@ async def orchestrate(request: OrchestrateRequest):
     return {"status": "success", "recommendation": result["final_recommendation"], "details": result}
 
 
+# FIX #10: Properly close Kafka producer on app shutdown to avoid resource leaks
+@app.on_event("shutdown")
+async def shutdown_event():
+    await close_kafka_producer()
+
+
 # Expose Prometheus metrics endpoint (provided by exporter)
 # @app.get("/metrics")
 # async def metrics():
 #     return prometheus_exporter.metrics
-
-
-

@@ -52,22 +52,52 @@ def reset_qdrant_singleton():
 
 async def custom_mock_ainvoke(prompt, *args, **kwargs):
     prompt_str = str(prompt)
-    if "Synthesize the following analyses" in prompt_str:
-        return AIMessage(content="Mocked LLM recommendation")
-    elif "Extract latitude and longitude" in prompt_str:
+
+    # Router node: return JSON routing decision
+    if "Query to route:" in prompt_str:
+        if "finance" in prompt_str.lower() and not any(
+            w in prompt_str.lower() for w in ["risk", "market", "operations", "compliance", "sales"]
+        ):
+            return AIMessage(content='{"agents": ["finance"], "reasoning": "Test: finance-only query"}')
+        elif "buy" in prompt_str.lower() or "sell" in prompt_str.lower() or "purchase" in prompt_str.lower():
+            return AIMessage(content='{"agents": ["sales"], "reasoning": "Test: sales query"}')
+        elif "finance risk market operations" in prompt_str.lower():
+            return AIMessage(content='{"agents": ["finance", "risk", "market", "operations"], "reasoning": "Test: multi-agent query"}')
+        else:
+            return AIMessage(content='{"agents": ["finance", "risk", "market", "operations", "compliance", "sales"], "reasoning": "Test: all agents"}')
+
+    # Strategy Agent
+    if "Chief Strategy Agent" in prompt_str:
+        return AIMessage(content="Mocked LLM recommendation with conflict resolution")
+
+    # Risk agent - coordinate extraction
+    if "Extract latitude and longitude" in prompt_str:
         return AIMessage(content="52.52,13.41")
-    elif "Analyze risk" in prompt_str and "Weather context: Current temperature is" in prompt_str:
-        return AIMessage(content="Mocked Risk Analysis")
-    elif "market analysis" in prompt_str and "Market data found." in prompt_str:
-        return AIMessage(content="Mocked Market Analysis")
-    elif "operational analysis" in prompt_str and "Machine health:" in prompt_str:
-        return AIMessage(content="Mocked Operations Analysis")
-    elif "financial analysis" in prompt_str:
-        return AIMessage(content="Mocked Finance Analysis")
-    elif "B2B sales strategy" in prompt_str:
-        return AIMessage(content="Mocked Sales Analysis with Contract")
-    elif "AgriNexus.Law" in prompt_str or "Official context from AgriNexus.Law" in prompt_str:
-        return AIMessage(content="Mocked Compliance Analysis with AgriNexus.Law context")
+
+    # Risk analysis
+    if "Chief Risk Agent" in prompt_str:
+        return AIMessage(content="Mocked Risk Analysis with weather data [Source: Open-Meteo API, Confidence: HIGH]")
+
+    # Market
+    if "Chief Market Agent" in prompt_str:
+        return AIMessage(content="Mocked Market Analysis with Qdrant data [Source: Qdrant, Confidence: MEDIUM]")
+
+    # Operations
+    if "Chief Operations Agent" in prompt_str:
+        return AIMessage(content="Mocked Operations Analysis with telemetry [Source: ClickHouse, Confidence: HIGH]")
+
+    # Finance
+    if "Chief Finance Agent" in prompt_str:
+        return AIMessage(content="Mocked Finance Analysis with topology [Source: Neo4j, Confidence: HIGH]")
+
+    # Sales
+    if "Chief Sales Agent" in prompt_str:
+        return AIMessage(content="Mocked Sales Analysis with contract [Source: Neo4j+AgriNexus, Confidence: MEDIUM]")
+
+    # Compliance
+    if "регулации" in prompt_str or "AgriNexus.Law" in prompt_str:
+        return AIMessage(content="Mocked Compliance Analysis with Bulgarian regulation context [Source: AgriNexus.Law, Confidence: HIGH]")
+
     return AIMessage(content="Mocked Default Analysis")
 
 @pytest.mark.asyncio
@@ -88,8 +118,8 @@ async def test_run_orchestrator_finance_only():
         mock_get_farm_topology.assert_called_once_with("farm_1")
         mock_emit_event.assert_called_once()
         
-        assert mock_ainvoke.call_count == 2
-        
+        assert mock_ainvoke.call_count == 3  # router + finance + strategy
+
         print(f"\n--- FINANCE ONLY RESULTS ---")
         print(f"Agents Activated: {result.get('next_agents')}")
         print(f"Finance Analysis: {result.get('finance_analysis')}")
