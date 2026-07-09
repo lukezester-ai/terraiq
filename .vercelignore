@@ -10,6 +10,10 @@ observability/
 security/
 data/
 
+# Root package.json to avoid framework detection conflicts
+package.json
+package-lock.json
+
 # Local archives and runtime artifacts
 TerraIQ.rar
 *.pyc
