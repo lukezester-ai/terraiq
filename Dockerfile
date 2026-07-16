@@ -2,12 +2,14 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Handle both root directory (.) and service directory (api/fastapi) build contexts
-COPY requirements.txt* ./api/fastapi/requirements.txt* /app/
-RUN pip install --no-cache-dir -r requirements.txt || pip install --no-cache-dir -r api/fastapi/requirements.txt
+COPY . /app/
 
-COPY . .
-RUN if [ -f "api/fastapi/main.py" ]; then cp -r api/fastapi/* /app/; fi
+# If built from root directory context (Root Directory = .), move api/fastapi/* up into /app/
+RUN if [ -d "/app/api/fastapi" ] && [ -f "/app/api/fastapi/requirements.txt" ]; then \
+        cp -r /app/api/fastapi/* /app/ && rm -rf /app/api; \
+    fi
+
+RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8000
 
