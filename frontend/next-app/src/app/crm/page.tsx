@@ -36,7 +36,7 @@ type InquiryForm = {
   additional_notes: string;
 };
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://terraiq-api.onrender.com";
 
 const quickPrompts = [
   "Предложи оферта за 500 тона пшеница доставка FOB Варна. Дай цена, срок, логистика, изисквания за качество и draft email.",

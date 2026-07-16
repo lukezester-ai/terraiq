@@ -137,6 +137,12 @@ export default function LandingPage() {
               <span className="opacity-50">|</span>
               <span className={i18n.language === 'bg' ? 'text-cyan-300' : ''}>BG</span>
             </button>
+            <Link
+              href="/register"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-bold text-neutral-950 transition hover:brightness-110 shadow-[0_0_15px_rgba(0,212,255,0.2)]"
+            >
+              Регистрация
+            </Link>
             <a
               href={`mailto:${contactEmail}?subject=TerraIQ%20demo%20request`}
               className="inline-flex items-center gap-2 rounded-lg border border-cyan-300/35 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300 hover:text-[#0B0F19]"

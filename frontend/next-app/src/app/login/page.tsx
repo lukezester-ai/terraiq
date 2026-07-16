@@ -44,6 +44,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">TerraIQ Админ</h1>
           <p className="mt-2 text-sm text-slate-400">Моля, въведете паролата си за достъп</p>
+          <p className="mt-1 text-xs font-semibold text-cyan-300">Парола по подразбиране: admin</p>
         </div>
         
         <div className="mb-5">

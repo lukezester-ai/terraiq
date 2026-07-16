@@ -30,23 +30,21 @@ def _get_price_id(plan_id: str) -> str:
     env_name = PLAN_PRICE_ENV.get(plan_id)
     if not env_name:
         raise HTTPException(status_code=400, detail="Unknown subscription plan.")
-
-    price_id = os.getenv(env_name, "").strip()
-    if not price_id:
-        raise HTTPException(status_code=503, detail=f"Stripe price is not configured for plan '{plan_id}'.")
-    return price_id
+    return os.getenv(env_name, "").strip()
 
 
 @router.post("/create-checkout-session")
 async def create_checkout_session(payload: CheckoutSessionRequest):
     """
-    Create a Stripe Checkout Session for a recurring subscription tier.
-    Requires STRIPE_*_PRICE_ID values created in Stripe Dashboard.
+    Create a Stripe Checkout Session for a recurring subscription tier, or return Demo Checkout URL if Stripe API keys are not configured.
     """
-    if not stripe.api_key:
-        raise HTTPException(status_code=503, detail="Stripe is not configured.")
-
     price_id = _get_price_id(payload.plan_id)
+    if not stripe.api_key or not price_id:
+        return {
+            "checkout_url": f"{frontend_base_url}/crm?demo_checkout=true&plan={payload.plan_id}&status=success",
+            "mode": "demo_fallback"
+        }
+
     session_payload = {
         "mode": "subscription",
         "line_items": [{"price": price_id, "quantity": 1}],

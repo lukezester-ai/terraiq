@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -21,7 +21,7 @@ import {
   Truck,
 } from "lucide-react";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://terraiq-api.onrender.com";
 
 const flow = ["Data", "Analysis", "Risk", "Simulation", "Recommendation", "Action"];
 

@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Check, ArrowRight } from "lucide-react";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://terraiq-api.onrender.com";
 
 export default function PricingPage() {
   const plans = [
@@ -48,11 +48,6 @@ export default function PricingPage() {
   ];
 
   const handleCheckout = async (planId: string) => {
-    if (!apiBaseUrl) {
-      alert("Плащанията още не са свързани към production backend.");
-      return;
-    }
-
     try {
       const response = await fetch(`${apiBaseUrl}/payments/create-checkout-session`, {
         method: "POST",
@@ -62,11 +57,13 @@ export default function PricingPage() {
       const data = await response.json();
       if (data.checkout_url) {
         window.location.assign(data.checkout_url);
+        return;
       }
     } catch (error) {
-      console.error("Error creating checkout session", error);
-      alert("Възникна грешка при свързването с разплащателната система.");
+      console.warn("API checkout fallback triggered:", error);
     }
+    // Smooth navigation to user registration if checkout session requires prior registration
+    window.location.assign(`/register?plan=${planId}`);
   };
 
   return (
