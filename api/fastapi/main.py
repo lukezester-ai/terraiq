@@ -61,6 +61,10 @@ app.include_router(crm.router, prefix="/crm", tags=["CRM"])
 app.include_router(payments.router, prefix="/payments", tags=["Payments"])
 app.include_router(intelligence.router, prefix="/intelligence", tags=["Enterprise Intelligence"])
 
+@app.get("/")
+async def root():
+    return {"service": "TerraIQ API", "status": "running", "docs": "/docs"}
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
