@@ -4,7 +4,7 @@ echo             TERRAIQ - PROPRIETARY BOOTLOADER
 echo ====================================================
 
 echo [1] Starting Enterprise Data Infrastructure (Docker)...
-docker-compose up -d
+docker compose up -d
 
 echo [2] Waiting for Databases to initialize (15 seconds)...
 timeout /t 15

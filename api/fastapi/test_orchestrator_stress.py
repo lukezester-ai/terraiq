@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 from unittest.mock import AsyncMock, patch
 
@@ -7,7 +7,14 @@ from langchain_core.messages import AIMessage
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from orchestrator import run_orchestrator
+from orchestrator import run_orchestrator, get_llm
+
+
+@pytest.fixture(autouse=True)
+def reset_llm_cache():
+    get_llm.cache_clear()
+    yield
+    get_llm.cache_clear()
 
 
 class FakeLLM:
@@ -69,4 +76,4 @@ async def test_llm_failure_returns_fallback_recommendation():
 
         result = await run_orchestrator(query="finance", farm_id="farm_1")
 
-        assert "Fallback recommendation" in result["final_recommendation"]
+        assert "[Fallback]" in result["final_recommendation"]

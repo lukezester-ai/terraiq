@@ -78,11 +78,19 @@ class QdrantMarketClient:
         try:
             self._ensure_collection()
             query_vector = self.embeddings.embed_query(query)
-            return self.client.search(
-                collection_name="market_data",
-                query_vector=query_vector,
-                limit=limit
-            )
+            if hasattr(self.client, "query_points"):
+                res = self.client.query_points(
+                    collection_name="market_data",
+                    query=query_vector,
+                    limit=limit
+                )
+                return res.points
+            else:
+                return self.client.search(
+                    collection_name="market_data",
+                    query_vector=query_vector,
+                    limit=limit
+                )
         except Exception as e:
             print(f"Error querying Qdrant: {e}")
             return []

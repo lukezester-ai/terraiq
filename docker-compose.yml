@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgis/postgis:15-3.3
@@ -135,7 +133,7 @@ services:
       - CLICKHOUSE_HOST=clickhouse
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - FRONTEND_BASE_URL=http://localhost:3000
-      - CORS_ORIGINS=http://localhost:3000,https://terraiq.me,https://www.terraiq.me
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://terraiq.me,https://www.terraiq.me
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
 
   frontend:

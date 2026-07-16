@@ -3,6 +3,7 @@ import random
 from datetime import datetime, timedelta
 from neo4j_client import neo4j_client
 from clickhouse_client import clickhouse_client
+from qdrant_client import qdrant_client
 
 async def seed_neo4j_knowledge_graph():
     print("[Neo4j] Initializing True Enterprise Knowledge Graph...")
@@ -93,15 +94,31 @@ async def seed_clickhouse_telemetry():
     clickhouse_client.insert_telemetry_batch(data_points)
     print("[ClickHouse] Telemetry Seeding Complete.")
 
+async def seed_qdrant_rag_engine():
+    print("[Qdrant] Seeding RAG Knowledge Base with Agricultural Regulations (DFZ/MZH) & Market Datasets...")
+    from regulatory_kb import get_all_regulatory_texts
+    market_docs = [
+        "EU Wheat Spot Price (Euronext Paris): €245.50/ton (+2.3% weekly). High demand from North African export markets driven by Black Sea shipping disruptions.",
+        "Corn (Matif) Futures Q3: €215.00/ton. Soil moisture deficits across Eastern Europe affecting yield expectations by 5-8%.",
+        "Sunflower Seed Spot Price Bulgaria: 880 BGN/ton (~€450/ton). Oilseed crushing plants reporting steady demand and tight local supply.",
+        "Fertilizer Market (Urea 46% N): €410/ton CIF Varna. Gas price stabilization keeping nitrogen fertilizer production costs steady across EU plants.",
+        "Diesel & Agricultural Fuel Index: €1.35/liter wholesale (Bulgarian excise exemption applied for registered agricultural producers under ДФЗ)."
+    ]
+    all_rag_docs = market_docs + get_all_regulatory_texts()
+    import asyncio
+    await asyncio.to_thread(qdrant_client.ingest_market_data, all_rag_docs)
+    print(f"[Qdrant] RAG Knowledge Base Seeding Complete. Ingested {len(all_rag_docs)} documents.")
+
 async def main():
     print("=== TerraIQ Enterprise Data Seeder ===")
     try:
         await seed_neo4j_knowledge_graph()
         await seed_clickhouse_telemetry()
+        await seed_qdrant_rag_engine()
         print("=== Seeding Finished ===")
     except Exception as e:
         print(f"FATAL ERROR during seeding: {e}")
-        print("NOTE: Make sure Docker is running and Neo4j/ClickHouse are accessible.")
+        print("NOTE: Make sure Docker is running and Neo4j/ClickHouse/Qdrant are accessible.")
 
 if __name__ == "__main__":
     asyncio.run(main())

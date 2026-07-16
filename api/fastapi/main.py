@@ -38,7 +38,7 @@ cors_origins = [
     origin.strip()
     for origin in os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:3000,https://terraiq.me,https://www.terraiq.me",
+        "http://localhost:3000,http://127.0.0.1:3000,https://terraiq.me,https://www.terraiq.me",
     ).split(",")
     if origin.strip()
 ]

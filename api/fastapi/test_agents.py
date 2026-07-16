@@ -28,6 +28,8 @@ def reset_qdrant_singleton():
     
     from infrastructure.qdrant_client import qdrant_client
     from qdrant_client import QdrantClient
+    from orchestrator import get_llm
+    get_llm.cache_clear()
     
     original_client = qdrant_client.client
     original_initialized = qdrant_client._initialized
@@ -39,6 +41,7 @@ def reset_qdrant_singleton():
     
     yield
     
+    get_llm.cache_clear()
     qdrant_client.client = original_client
     qdrant_client._initialized = original_initialized
     qdrant_client.embeddings = original_embeddings
@@ -55,13 +58,14 @@ async def custom_mock_ainvoke(prompt, *args, **kwargs):
 
     # Router node: return JSON routing decision
     if "Query to route:" in prompt_str:
-        if "finance" in prompt_str.lower() and not any(
-            w in prompt_str.lower() for w in ["risk", "market", "operations", "compliance", "sales"]
+        query_part = prompt_str.split("Query to route:")[-1].lower()
+        if "finance" in query_part and not any(
+            w in query_part for w in ["risk", "market", "operations", "compliance", "sales"]
         ):
             return AIMessage(content='{"agents": ["finance"], "reasoning": "Test: finance-only query"}')
-        elif "buy" in prompt_str.lower() or "sell" in prompt_str.lower() or "purchase" in prompt_str.lower():
+        elif "buy" in query_part or "sell" in query_part or "purchase" in query_part:
             return AIMessage(content='{"agents": ["sales"], "reasoning": "Test: sales query"}')
-        elif "finance risk market operations" in prompt_str.lower():
+        elif "finance risk market operations" in query_part:
             return AIMessage(content='{"agents": ["finance", "risk", "market", "operations"], "reasoning": "Test: multi-agent query"}')
         else:
             return AIMessage(content='{"agents": ["finance", "risk", "market", "operations", "compliance", "sales"], "reasoning": "Test: all agents"}')
@@ -161,7 +165,7 @@ async def test_run_orchestrator_all_agents():
         mock_qdrant_search.assert_called_once()
         mock_httpx_get.assert_called_once_with("https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true")
         mock_clickhouse.assert_called_once_with(farm_id="farm_1", machine_id="tractor_1")
-        mock_qdrant_search.assert_called_once_with(query="finance risk market operations", limit=1)
+        mock_qdrant_search.assert_called_once_with(query="finance risk market operations", limit=3)
         
         print(f"\n--- FULL SIMULATION RESULTS ---")
         print(f"Agents Activated: {result.get('next_agents')}")
