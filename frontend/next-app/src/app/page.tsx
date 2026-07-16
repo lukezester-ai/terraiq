@@ -65,16 +65,16 @@ const commandItems = [
 ];
 
 const strategicCapabilities = [
-  { title: "Decision Memory", text: "Measures every recommendation against real outcomes and profit impact.", icon: Brain },
-  { title: "Board Room AI", text: "Investment memos for land, debt, rent, machinery and expansion.", icon: Landmark },
-  { title: "Contract Intelligence", text: "AgrinexusLaw-powered lease, supply, insurance and risk clause analysis.", icon: Scale },
-  { title: "Executive Copilot", text: "Weekly briefing on contracts, drought, markets, machines and priorities.", icon: Command },
-  { title: "Benchmark Engine", text: "Compares yield, cost and performance against region and top percentile.", icon: BarChart3 },
-  { title: "Scenario Engine", text: "Conservative, realistic and aggressive futures with profit deltas.", icon: GitBranch },
-  { title: "Capital Allocation", text: "Ranks where the next EUR 500k should go by ROI and risk.", icon: CircleDollarSign },
-  { title: "Document Brain", text: "RAG over contracts, invoices, subsidies, reports and correspondence.", icon: Database },
-  { title: "Predictive Cash Flow", text: "6 to 24 month forecast for inventory, revenue, loans and obligations.", icon: LineChart },
-  { title: "Multi-Company", text: "One operating view across several entities, farms and cooperatives.", icon: Factory },
+  { title: "Decision Memory", text: "Measures every recommendation against real outcomes and profit impact.", icon: Brain, href: "/crm" },
+  { title: "Board Room AI", text: "Investment memos for land, debt, rent, machinery and expansion.", icon: Landmark, href: "/crm" },
+  { title: "Contract Intelligence", text: "AgrinexusLaw-powered lease, supply, insurance and risk clause analysis.", icon: Scale, href: "/crm" },
+  { title: "Executive Copilot", text: "Weekly briefing on contracts, drought, markets, machines and priorities.", icon: Command, href: "/crm" },
+  { title: "Benchmark Engine", text: "Compares yield, cost and performance against region and top percentile.", icon: BarChart3, href: "/crm" },
+  { title: "Scenario Engine", text: "Conservative, realistic and aggressive futures with profit deltas.", icon: GitBranch, href: "/demo" },
+  { title: "Capital Allocation", text: "Ranks where the next EUR 500k should go by ROI and risk.", icon: CircleDollarSign, href: "/crm" },
+  { title: "Document Brain", text: "RAG over contracts, invoices, subsidies, reports and correspondence.", icon: Database, href: "/crm" },
+  { title: "Predictive Cash Flow", text: "6 to 24 month forecast for inventory, revenue, loans and obligations.", icon: LineChart, href: "/crm" },
+  { title: "Multi-Company", text: "One operating view across several entities, farms and cooperatives.", icon: Factory, href: "/admin" },
 ];
 
 function LogoMark() {
@@ -347,12 +347,19 @@ export default function LandingPage() {
           </Link>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          {strategicCapabilities.map(({ title, text, icon: Icon }) => (
-            <article key={title} className="rounded-lg border border-[#243041] bg-[#131A26] p-5">
-              <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-[#243041] bg-[#0B0F19] text-cyan-300"><Icon size={20} /></span>
-              <h3 className="text-lg font-bold">{title}</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-400">{text}</p>
-            </article>
+          {strategicCapabilities.map(({ title, text, icon: Icon, href }) => (
+            <Link key={title} href={href} className="group flex flex-col justify-between rounded-lg border border-[#243041] bg-[#131A26] p-5 transition-all hover:border-cyan-300/70 hover:bg-[#182232] hover:shadow-[0_0_24px_rgba(0,212,255,0.15)]">
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#243041] bg-[#0B0F19] text-cyan-300 transition-transform group-hover:scale-110"><Icon size={20} /></span>
+                  <span className="flex items-center gap-1 rounded-full border border-[#243041] bg-[#0B0F19] px-2.5 py-1 text-xs font-semibold text-slate-400 group-hover:border-cyan-300/40 group-hover:text-cyan-300">
+                    Open <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-white group-hover:text-cyan-200">{title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-400 group-hover:text-slate-300">{text}</p>
+              </div>
+            </Link>
           ))}
         </div>
       </section>
