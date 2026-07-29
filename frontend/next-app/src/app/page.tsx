@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   CircleDollarSign,
   ClipboardCheck,
-  CloudSun,
   Command,
   Database,
   ExternalLink,
@@ -33,7 +32,7 @@ import {
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
-const contactEmail = "lukezester@gmail.com";
+const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "lukezester@gmail.com";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },

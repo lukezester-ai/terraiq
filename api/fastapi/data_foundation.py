@@ -1,5 +1,7 @@
 ﻿from __future__ import annotations
 
+from infrastructure.kafka_client import emit_event
+
 from domain_models import (
     AgentSpec,
     DataSourceSpec,
@@ -573,8 +575,6 @@ async def run_crisis_simulation() -> dict:
     }
 
     try:
-        from infrastructure.kafka_client import emit_event
-
         await emit_event("hailstorm.warning", event)
         event_status = "emitted"
     except Exception as exc:

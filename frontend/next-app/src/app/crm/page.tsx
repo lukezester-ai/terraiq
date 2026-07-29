@@ -83,7 +83,7 @@ export default function CRMDashboard() {
   const [asking, setAsking] = useState(false);
   const [form, setForm] = useState<InquiryForm>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
-  const contactEmail = "lukezester@gmail.com";
+  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "lukezester@gmail.com";
 
   const activeContext = useMemo(() => {
     const first = inquiries[0];

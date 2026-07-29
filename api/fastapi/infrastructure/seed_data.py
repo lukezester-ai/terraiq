@@ -1,9 +1,9 @@
 import asyncio
 import random
 from datetime import datetime, timedelta
-from neo4j_client import neo4j_client
-from clickhouse_client import clickhouse_client
-from qdrant_client import qdrant_client
+from .neo4j_client import neo4j_client
+from .clickhouse_client import clickhouse_client
+from .qdrant_client import qdrant_client
 
 async def seed_neo4j_knowledge_graph():
     print("[Neo4j] Initializing True Enterprise Knowledge Graph...")
@@ -96,7 +96,7 @@ async def seed_clickhouse_telemetry():
 
 async def seed_qdrant_rag_engine():
     print("[Qdrant] Seeding RAG Knowledge Base with Agricultural Regulations (DFZ/MZH) & Market Datasets...")
-    from regulatory_kb import get_all_regulatory_texts
+    from .regulatory_kb import get_all_regulatory_texts
     market_docs = [
         "EU Wheat Spot Price (Euronext Paris): €245.50/ton (+2.3% weekly). High demand from North African export markets driven by Black Sea shipping disruptions.",
         "Corn (Matif) Futures Q3: €215.00/ton. Soil moisture deficits across Eastern Europe affecting yield expectations by 5-8%.",
@@ -105,7 +105,6 @@ async def seed_qdrant_rag_engine():
         "Diesel & Agricultural Fuel Index: €1.35/liter wholesale (Bulgarian excise exemption applied for registered agricultural producers under ДФЗ)."
     ]
     all_rag_docs = market_docs + get_all_regulatory_texts()
-    import asyncio
     await asyncio.to_thread(qdrant_client.ingest_market_data, all_rag_docs)
     print(f"[Qdrant] RAG Knowledge Base Seeding Complete. Ingested {len(all_rag_docs)} documents.")
 

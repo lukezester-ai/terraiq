@@ -2,18 +2,17 @@ import os
 from functools import lru_cache
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-import redis.asyncio as aioredis
-from openai import OpenAI
+import redis.asyncio as redis_async
+from openai import AsyncOpenAI
 
-# Database URL – read from env (set in docker-compose)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://terraiq:terraiqpass@localhost:5432/terraiqdb")
-engine = create_engine(DATABASE_URL, echo=False, future=True)
-SessionLocal = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
+engine = create_engine(DATABASE_URL, echo=False)
+SessionLocal = scoped_session(sessionmaker(autoflush=False, bind=engine))
 
 @lru_cache()
 def get_redis():
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    return aioredis.from_url(redis_url)
+    return redis_async.from_url(redis_url)
 
 def get_db():
     db = SessionLocal()
@@ -27,10 +26,8 @@ def get_db():
         db.close()
 
 def get_llm():
-    # OpenAI client – expects OPENAI_API_KEY env variable
-    return OpenAI()
+    return AsyncOpenAI()
 
-# FastAPI dependency wrappers
 async def get_redis_async():
     return get_redis()
 

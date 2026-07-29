@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LockKeyhole, ArrowRight, CheckCircle2, Sprout, Building2, Mail, KeyRound, MapPin } from "lucide-react";
+import { ArrowRight, CheckCircle2, Sprout, Building2, Mail, KeyRound, MapPin } from "lucide-react";
 import Link from "next/link";
 
 export default function RegisterPage() {

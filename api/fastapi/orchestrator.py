@@ -1,4 +1,6 @@
 import json
+import asyncio
+import os
 import httpx
 from functools import lru_cache
 from typing import TypedDict, List, Optional, Sequence
@@ -93,7 +95,8 @@ class AgentState(TypedDict, total=False):
 # FIX #10: Use @lru_cache to reuse ChatOpenAI instance instead of creating a new one per call
 @lru_cache(maxsize=1)
 def get_llm():
-    return ChatOpenAI(model="gpt-4o-mini")
+    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    return ChatOpenAI(model=model)
 
 
 async def router_node(state: AgentState) -> AgentState:
@@ -197,7 +200,6 @@ async def market_agent(state: AgentState) -> AgentState:
     query = state.get("query", "") or ""
 
     try:
-        import asyncio
         qdrant_results = await asyncio.to_thread(qdrant_client.search_market_data, query=query, limit=3)
         if qdrant_results:
             context = "\n".join(
@@ -234,7 +236,6 @@ async def operations_agent(state: AgentState) -> AgentState:
     query = state.get("query", "") or ""
 
     try:
-        import asyncio
         health_data = await asyncio.to_thread(
             clickhouse_client.get_machine_health, farm_id=farm_id, machine_id="tractor_1"
         )
