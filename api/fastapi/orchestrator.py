@@ -15,16 +15,17 @@ from infrastructure.shadownet_client import shadow_net
 from langchain_openai import ChatOpenAI
 
 
-ROUTER_SYSTEM_PROMPT = """You are the intelligent query router for TerraIQ, an enterprise agricultural AI platform.
+ROUTER_SYSTEM_PROMPT = """You are the intelligent query router for TerraIQ, a global commodity and financial intelligence platform.
 Analyze the user's query and determine which specialized agents should process it.
 
 Available agents and their domains:
-- finance: Cost analysis, profitability, cash flow, working capital, margins, budget, financial performance
-- risk: Climate/weather risk, credit risk, market risk, operational risk, insurance, natural disasters
-- market: Commodity prices, market trends, supply/demand, competitor analysis, trade timing, price signals
-- operations: Machinery, logistics, field operations, capacity planning, telemetry, equipment
-- compliance: EU/Bulgarian agricultural regulations, subsidies (ДФЗ, ОСП), legal compliance, documentation
-- sales: B2B trade inquiries, buy/sell offers, contract generation, inventory matching, procurement
+- market: Commodity prices (energy, metals, agriculture, chemicals), FX, rates, market trends, supply/demand, trade timing, price signals
+- risk: Market risk, credit risk, operational risk, geopolitical risk, sanctions, counterparty risk, liquidity risk
+- finance: Margins, hedging, structured products, working capital, cash flow, FX exposure, financing, cost analysis
+- operations: Logistics, shipping, storage, supply chain, inventory, capacity planning, infrastructure
+- compliance: Sanctions (OFAC, EU), trade regulations, KYC/AML, documentation, legal compliance
+- sales: B2B trade inquiries, buy/sell offers, contract generation, counterparty matching, procurement, auction
+- execution: Smart contract escrow, settlement, payment terms, delivery vs payment, Web3 integration
 
 Respond ONLY with a valid JSON object containing:
 - "agents": list of agent names to activate
@@ -33,32 +34,47 @@ Respond ONLY with a valid JSON object containing:
 If unclear, include ALL agents."""
 
 FINANCE_SYSTEM_PROMPT = """You are the Chief Finance Agent for TerraIQ.
-Analyze margins, cost base, cash flow, working capital, and profitability using the provided farm topology.
-Cite specific data sources in your analysis. State assumptions clearly. Provide a confidence level."""
+Analyze margins, hedging strategies, financing structures, FX exposure, working capital, and structured products.
+Assess cost of carry, basis risk, and funding liquidity for commodity and financial positions.
+Cover: FX forwards, interest rate exposure, repo financing, collateral management, margin calls.
+Cite data sources. State assumptions clearly. Provide a confidence level."""
 
 RISK_SYSTEM_PROMPT = """You are the Chief Risk Agent for TerraIQ.
-Assess climate risk, market risk, operational risk, and financial risk using real-time weather data when available.
-Consider extreme weather, price volatility, machinery downtime, and liquidity risk.
-Cite data sources. Flag high-confidence vs low-confidence assessments."""
+Assess market risk (VaR, stress scenarios), credit risk (counterparty exposure), operational risk (logistics, infrastructure),
+geopolitical risk (sanctions, conflicts, trade policy), and liquidity risk (margin calls, funding gaps).
+Consider extreme weather, supply disruptions, corridor closures, and regulatory changes.
+Use real-time data when available. Cite sources. Flag high-confidence vs low-confidence."""
 
 MARKET_SYSTEM_PROMPT = """You are the Chief Market Agent for TerraIQ.
-Analyze commodity prices, market trends, supply/demand dynamics using Qdrant vector search results.
-Identify price signals, trading opportunities, and market risks.
-Cite your market data sources and competitor intelligence."""
+Analyze global commodity prices (energy, metals, agriculture, chemicals), FX, and interest rates.
+Track market trends, supply/demand dynamics, term structure, and cross-commodity spreads.
+Identify price signals, arbitrage opportunities, trading strategies, and market risks.
+Cover: spot, futures, options, swaps, and OTC markets.
+Cite your market data sources and provide confidence levels."""
 
 OPERATIONS_SYSTEM_PROMPT = """You are the Chief Operations Agent for TerraIQ.
-Analyze machinery health, logistics, field operations using ClickHouse telemetry data.
-Identify bottlenecks, maintenance needs, and efficiency improvements.
-Cite telemetry sources and confidence levels."""
+Analyze logistics, shipping routes, storage capacity, supply chain bottlenecks, and infrastructure.
+Cover: vessel tracking, port congestion, pipeline flows, warehouse inventories, trucking/rail availability.
+Identify operational risks, capacity constraints, and efficiency improvements.
+Cite data sources and confidence levels."""
 
-COMPLIANCE_SYSTEM_PROMPT = """Вие сте главният агент по регулации и съответствие за TerraIQ.
-Анализирайте евро/българските селскостопански регулации, субсидии (ДФЗ, ОСП), срокове и документация.
-Използвайте контекст от AgriNexus.Law. Цитирайте конкретни документи. Посочете увереност."""
+COMPLIANCE_SYSTEM_PROMPT = """You are the Chief Compliance Agent for TerraIQ.
+Analyze sanctions (OFAC, EU, UN), trade regulations, export controls, KYC/AML requirements, and documentation.
+Cover: sanctioned entities/countries, dual-use goods, restricted parties, trade finance compliance.
+Flag high-risk jurisdictions, counterparties, and commodities.
+Cite specific regulations and provide confidence levels."""
 
-SALES_SYSTEM_PROMPT = """You are the Chief Sales Agent for TerraIQ.
-Analyze B2B trade inquiries, match with available inventory, generate sales strategies.
-Use warehouse inventory data and competitor intelligence.
-Provide actionable recommendations with pricing, delivery terms, and source citations."""
+SALES_SYSTEM_PROMPT = """You are the Chief Sales/Trade Agent for TerraIQ.
+Analyze B2B trade inquiries, match with available inventory/supply, generate structured offers.
+Assess counterparty credit, delivery terms (CIF, FOB, DAP), payment terms, and quality specifications.
+Provide actionable recommendations with pricing logic, delivery schedule, and risk mitigants.
+Structure the deal for smart contract execution (escrow, milestone payments, delivery vs payment)."""
+
+EXECUTION_SYSTEM_PROMPT = """You are the Chief Execution Agent for TerraIQ.
+Structure the trade for Web3 smart contract settlement via kontor21.
+Determine: escrow amount (USDC), milestone triggers, delivery verification method, dispute resolution terms.
+Define the payment flow: deposit → milestone 1 → release → milestone 2 → final settlement.
+Ensure all terms are machine-readable for smart contract encoding."""
 
 STRATEGY_SYSTEM_PROMPT = """You are the Chief Strategy Agent for TerraIQ.
 Synthesize all agent analyses into a single actionable business recommendation.
@@ -75,7 +91,8 @@ Structure:
 - Conflicts Identified (if any)
 - Recommended Resolution
 - Confidence Level
-- Next Steps"""
+- Next Steps
+- Smart Contract Summary (if execution agent was involved)"""
 
 
 class AgentState(TypedDict, total=False):
@@ -88,6 +105,7 @@ class AgentState(TypedDict, total=False):
     operations_analysis: str
     compliance_analysis: str
     sales_analysis: str
+    execution_analysis: str
     final_recommendation: str
     next_agents: List[str]
 
@@ -117,8 +135,8 @@ async def router_node(state: AgentState) -> AgentState:
         else:
             next_agents = []
             reasoning = "Could not parse router response"
-        if not next_agents:
-            next_agents = ["finance", "risk", "market", "operations", "compliance", "sales"]
+    if not next_agents:
+        next_agents = ["finance", "risk", "market", "operations", "compliance", "sales", "execution"]
         print(f"Router decision: {next_agents} — {reasoning}")
         return {"next_agents": next_agents, "router_reasoning": reasoning}
     except Exception as e:
@@ -307,12 +325,29 @@ async def sales_agent(state: AgentState) -> AgentState:
     return {"sales_analysis": analysis}
 
 
+async def execution_agent(state: AgentState) -> AgentState:
+    print("Execution Agent structuring settlement...")
+    query = state.get("query", "") or ""
+
+    try:
+        llm = get_llm()
+        response = await llm.ainvoke(
+            f"{EXECUTION_SYSTEM_PROMPT}\n\nTrade/Deal: {query}\n\nProvide smart contract execution plan: escrow amount, milestone triggers, delivery verification, dispute resolution."
+        )
+        analysis = response.content
+    except Exception as e:
+        print(f"Error in execution_agent: {e}")
+        analysis = "[Fallback] Execution plan unavailable. Recommend manual escrow setup via kontor21."
+
+    return {"execution_analysis": analysis}
+
+
 async def strategy_agent(state: AgentState) -> AgentState:
     print("Strategy Agent (Executive) synthesizing with conflict resolution...")
     query = state.get("query", "") or ""
 
     analyses = []
-    for agent_name in ["finance", "risk", "market", "operations", "compliance", "sales"]:
+    for agent_name in ["finance", "risk", "market", "operations", "compliance", "sales", "execution"]:
         key = f"{agent_name}_analysis"
         value = state.get(key)
         if value and value.strip():
@@ -350,6 +385,7 @@ workflow.add_node("market", market_agent)
 workflow.add_node("operations", operations_agent)
 workflow.add_node("compliance", compliance_agent)
 workflow.add_node("sales", sales_agent)
+workflow.add_node("execution", execution_agent)
 workflow.add_node("strategy", strategy_agent)
 
 
@@ -364,7 +400,7 @@ workflow.set_entry_point("router")
 workflow.add_conditional_edges(
     "router",
     route_agents,
-    ["finance", "risk", "market", "operations", "compliance", "sales"],
+    ["finance", "risk", "market", "operations", "compliance", "sales", "execution"],
 )
 
 workflow.add_edge("finance", "strategy")
@@ -373,6 +409,7 @@ workflow.add_edge("market", "strategy")
 workflow.add_edge("operations", "strategy")
 workflow.add_edge("compliance", "strategy")
 workflow.add_edge("sales", "strategy")
+workflow.add_edge("execution", "strategy")
 
 workflow.add_edge("strategy", END)
 
@@ -390,6 +427,7 @@ async def run_orchestrator(query: str, farm_id: str = "farm_1") -> dict:
         "operations_analysis": "",
         "compliance_analysis": "",
         "sales_analysis": "",
+        "execution_analysis": "",
         "final_recommendation": "",
         "next_agents": [],
     }

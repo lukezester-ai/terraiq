@@ -64,16 +64,16 @@ const commandItems = [
 ];
 
 const strategicCapabilities = [
-  { title: "Decision Memory", text: "Measures every recommendation against real outcomes and profit impact.", icon: Brain, href: "/crm" },
-  { title: "Board Room AI", text: "Investment memos for land, debt, rent, machinery and expansion.", icon: Landmark, href: "/crm" },
-  { title: "Contract Intelligence", text: "AgrinexusLaw-powered lease, supply, insurance and risk clause analysis.", icon: Scale, href: "/crm" },
-  { title: "Executive Copilot", text: "Weekly briefing on contracts, drought, markets, machines and priorities.", icon: Command, href: "/crm" },
-  { title: "Benchmark Engine", text: "Compares yield, cost and performance against region and top percentile.", icon: BarChart3, href: "/crm" },
-  { title: "Scenario Engine", text: "Conservative, realistic and aggressive futures with profit deltas.", icon: GitBranch, href: "/demo" },
-  { title: "Capital Allocation", text: "Ranks where the next EUR 500k should go by ROI and risk.", icon: CircleDollarSign, href: "/crm" },
-  { title: "Document Brain", text: "RAG over contracts, invoices, subsidies, reports and correspondence.", icon: Database, href: "/crm" },
-  { title: "Predictive Cash Flow", text: "6 to 24 month forecast for inventory, revenue, loans and obligations.", icon: LineChart, href: "/crm" },
-  { title: "Multi-Company", text: "One operating view across several entities, farms and cooperatives.", icon: Factory, href: "/admin" },
+  { title: "Decision Memory", text: "Measures every trade recommendation against real outcomes and profit impact across all commodity markets.", icon: Brain, href: "/crm" },
+  { title: "Commodity Intelligence", text: "Real-time prices, term structures, and spreads across energy, metals, agriculture, and chemicals.", icon: Landmark, href: "/crm" },
+  { title: "Trade Finance", text: "Smart contract escrow, USDC settlement, milestone payments, and automated dispute resolution via kontor21.", icon: Scale, href: "/crm" },
+  { title: "Executive Copilot", text: "Daily briefing on markets, risks, logistics, cash flow, and actionable trade opportunities.", icon: Command, href: "/crm" },
+  { title: "Risk Engine", text: "Multi-factor risk assessment: market, credit, geopolitical, sanctions, and counterparty exposure.", icon: BarChart3, href: "/crm" },
+  { title: "Scenario Engine", text: "What-if simulations across price shocks, supply disruptions, FX moves, and trade policy changes.", icon: GitBranch, href: "/demo" },
+  { title: "Capital Allocation", text: "Ranks the best deployment of capital across commodities, geographies, and trade structures.", icon: CircleDollarSign, href: "/crm" },
+  { title: "Document Brain", text: "RAG over contracts, sanctions lists, regulations, shipping docs, and trade correspondence.", icon: Database, href: "/crm" },
+  { title: "Predictive Analytics", text: "Forecasts commodity prices, freight rates, FX moves, and counterparty credit trends 6-24 months out.", icon: LineChart, href: "/crm" },
+  { title: "Multi-Market", text: "One operating view across physical commodities, financial derivatives, and on-chain settlement.", icon: Factory, href: "/admin" },
 ];
 
 function LogoMark() {
@@ -154,10 +154,10 @@ export default function LandingPage() {
 
         <div className="relative z-10 mx-auto flex min-h-[calc(100vh-84px)] max-w-7xl items-center px-5 py-12 sm:px-8">
           <motion.div initial="hidden" animate="visible" variants={containerVariants} className="mx-auto max-w-5xl text-center">
-            <motion.div variants={itemVariants} className="mx-auto mb-8 flex w-fit items-center gap-3 rounded-full border border-[#243041] bg-[#131A26]/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200 backdrop-blur">
+            <motion.p variants={itemVariants} className="mx-auto mb-8 flex w-fit items-center gap-3 rounded-full border border-[#243041] bg-[#131A26]/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200 backdrop-blur">
               <Network size={15} />
               {t('hero.subtitle')}
-            </motion.div>
+            </motion.p>
             <motion.div variants={itemVariants} className="mx-auto mb-7 flex justify-center">
               <LogoMark />
             </motion.div>
@@ -168,7 +168,8 @@ export default function LandingPage() {
               {t('hero.desc1')}<br className="sm:hidden" /> {t('hero.desc2')}
             </motion.p>
             <motion.p variants={itemVariants} className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-400">
-              {t('hero.body')}
+              AI-native decision intelligence across energy, metals, agriculture, and finance. <br />
+              Web3-powered settlement via smart contract escrow.
             </motion.p>
             <motion.div variants={itemVariants} className="mt-10 flex flex-wrap justify-center gap-3">
               <a

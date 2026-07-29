@@ -11,7 +11,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 # from opentelemetry.exporter.prometheus import PrometheusMetricsExporter
 
-from routers import rag, image, crm, payments, intelligence
+from routers import rag, image, crm, payments, intelligence, markets, execution
 from orchestrator import run_orchestrator
 from infrastructure.kafka_client import close_kafka_producer
 from typing import Optional
@@ -32,7 +32,7 @@ trace.set_tracer_provider(provider)
 # prometheus_exporter = PrometheusMetricsExporter()
 # provider.add_span_processor(BatchSpanProcessor(prometheus_exporter))
 
-app = FastAPI(title="TerraIQ FastAPI", version="0.1.0")
+app = FastAPI(title="TerraIQ — Global Commodity Intelligence & Web3 Settlement", version="0.2.0")
 
 cors_origins = [
     origin.strip()
@@ -60,10 +60,12 @@ app.include_router(image.router, prefix="/upload", tags=["Image"])
 app.include_router(crm.router, prefix="/crm", tags=["CRM"])
 app.include_router(payments.router, prefix="/payments", tags=["Payments"])
 app.include_router(intelligence.router, prefix="/intelligence", tags=["Enterprise Intelligence"])
+app.include_router(markets.router, prefix="/markets", tags=["Markets"])
+app.include_router(execution.router, prefix="/execution", tags=["Execution"])
 
 @app.get("/")
 async def root():
-    return {"service": "TerraIQ API", "status": "running", "docs": "/docs"}
+    return {"service": "TerraIQ", "status": "running", "docs": "/docs", "version": "0.2.0"}
 
 @app.get("/health")
 async def health_check():
