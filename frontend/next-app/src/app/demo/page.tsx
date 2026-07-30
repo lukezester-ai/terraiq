@@ -8,6 +8,7 @@ import {
   BarChart3,
   CircleDollarSign,
   ClipboardCheck,
+  CloudSun,
   FileText,
   Landmark,
   LineChart,

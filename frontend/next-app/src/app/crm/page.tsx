@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Bot, Briefcase, CheckCircle2, MessageSquare, RefreshCw, Send } from "lucide-react";
+import { Bot, Briefcase, CheckCircle2, Globe, MessageSquare, RefreshCw, Send } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type Inquiry = {
   id: string;
@@ -38,13 +39,6 @@ type InquiryForm = {
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://terraiq-api.onrender.com";
 
-const quickPrompts = [
-  "Предложи оферта за 500 тона пшеница доставка FOB Варна. Дай цена, срок, логистика, изисквания за качество и draft email.",
-  "Оцени риск от забавяне на рейса. Какви условия за плащане, ако корабът закъснее и клиентът иска компенсация?",
-  "Нужна поддръжка 1200 тн слънчоглед до Констанца. Подготви комерсиално писмо до потенциалния клиент за 30 дни.",
-  "Сравни три ферми: цена, логистика, качество клас, условия и варианти за експорт през пристанище.",
-];
-
 const demoInquiry: Inquiry = {
   id: "demo_inq_001",
   timestamp: new Date().toISOString(),
@@ -55,13 +49,13 @@ const demoInquiry: Inquiry = {
     requested_crop: "Wheat",
     quantity_tons: 500,
     destination: "Varna Port",
-    additional_notes: "Fallback данни, защото backend FastAPI не е достъпен.",
+    additional_notes: "Fallback data because FastAPI backend is not available.",
   },
   orchestrator_result: {
-    sales_analysis: "Demo отговор: Предложена оферта 500 тона пшеница FOB Варна.",
-    finance_analysis: "Demo отговор: Анализирани маржове, логистика, валутен риск и ценообразуване.",
+    sales_analysis: "Demo response: Proposed offer 500t wheat FOB Varna.",
+    finance_analysis: "Demo response: Analyzed margins, logistics, FX risk and pricing.",
     final_recommendation:
-      "Това е demo fallback. Стартирайте FastAPI и Postgres, приложете migrations и подайте реална CRM заявка, за да се използва AI.",
+      "This is a demo fallback. Start FastAPI and Postgres, apply migrations and submit a real CRM inquiry to use AI.",
   },
 };
 
@@ -75,9 +69,10 @@ const emptyForm: InquiryForm = {
 };
 
 export default function CRMDashboard() {
+  const { t, i18n } = useTranslation();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [aiStatus, setAiStatus] = useState("Зареждане на CRM записи...");
+  const [aiStatus, setAiStatus] = useState(t("crm.loading"));
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
@@ -85,23 +80,30 @@ export default function CRMDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "lukezester@gmail.com";
 
+  const quickPrompts = [
+    t("crm.prompt_1"),
+    t("crm.prompt_2"),
+    t("crm.prompt_3"),
+    t("crm.prompt_4"),
+  ];
+
   const activeContext = useMemo(() => {
     const first = inquiries[0];
-    if (!first) return "Няма активни CRM записи.";
+    if (!first) return t("crm.empty");
     return (
-      "CRM запис: " +
+      "CRM record: " +
       first.inquiry.client_name +
-      " иска " +
+      " wants " +
       first.inquiry.quantity_tons +
-      " тона " +
+      "t " +
       first.inquiry.requested_crop +
-      " до " +
+      " to " +
       first.inquiry.destination +
-      ". Статус: " +
+      ". Status: " +
       first.status +
       "."
     );
-  }, [inquiries]);
+  }, [inquiries, t]);
 
   const loadInquiries = async () => {
     setLoading(true);
@@ -113,13 +115,13 @@ export default function CRMDashboard() {
       setInquiries(records);
       setAiStatus(
         records.length
-          ? "CRM е свързан с FastAPI и Postgres."
-          : "CRM е празен — все още няма запазени запитвания.",
+          ? t("crm.connected")
+          : t("crm.empty_status"),
       );
     } catch (error) {
       console.error("[crm-load]", error);
       setInquiries([demoInquiry]);
-      setAiStatus("FastAPI CRM не е достъпен. Показвам demo fallback данни.");
+      setAiStatus(t("crm.unavailable"));
     } finally {
       setLoading(false);
     }
@@ -132,7 +134,7 @@ export default function CRMDashboard() {
   const submitInquiry = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
-    setAiStatus("Изпращане на CRM запитване към FastAPI...");
+    setAiStatus(t("crm.submitting_status"));
     try {
       const payload = {
         client_name: form.client_name.trim(),
@@ -152,13 +154,13 @@ export default function CRMDashboard() {
       setForm(emptyForm);
       setAiStatus(
         data.status === "failed"
-          ? "Запитването е записано, но AI draft не беше генериран."
-          : "Запитването е прието с AI draft и препоръки.",
+          ? t("crm.failed_no_draft")
+          : t("crm.accepted"),
       );
       await loadInquiries();
     } catch (error) {
       console.error("[crm-submit]", error);
-      setAiStatus("CRM изпращането не беше успешно. Проверете FastAPI, Postgres и OPENAI_API_KEY.");
+      setAiStatus(t("crm.submit_error"));
     } finally {
       setSubmitting(false);
     }
@@ -178,7 +180,7 @@ export default function CRMDashboard() {
           query: q,
           context:
             activeContext +
-            " Контекстът идва от активните запитвания. За реални live данни свържете backend, когато е наличен.",
+            " Context comes from active inquiries. For real live data connect the backend when available.",
         }),
       });
       const data = (await res.json()) as { answer?: string; error?: string };
@@ -186,9 +188,7 @@ export default function CRMDashboard() {
       setAnswer(data.answer);
     } catch (error) {
       console.error("[crm-ask-ai]", error);
-      setAnswer(
-        "Не успях да получа отговор от TerraIQ AI. Проверете OpenAI конфигурацията при Vercel или локалната среда и API ключа.",
-      );
+      setAnswer(t("crm.ai_error"));
     } finally {
       setAsking(false);
     }
@@ -202,40 +202,51 @@ export default function CRMDashboard() {
             <Briefcase className="text-[var(--accent)]" size={24} />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-semibold tracking-wide">Commercial CRM</h1>
-            <p className="mt-1 text-sm text-[var(--secondary)]">Inbound Leads & AI Deal Strategies</p>
+            <h1 className="text-2xl font-semibold tracking-wide">{t("crm.title")}</h1>
+            <p className="mt-1 text-sm text-[var(--secondary)]">{t("crm.subtitle")}</p>
             <p className="mt-2 text-xs text-[var(--accent)]">{aiStatus}</p>
           </div>
-          <button
-            type="button"
-            onClick={loadInquiries}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          >
-            <RefreshCw size={14} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => i18n.changeLanguage(i18n.language === "bg" ? "en" : "bg")}
+              className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-cyan-300 transition-colors bg-[#131A26] px-2 py-1.5 rounded-md border border-[#243041]"
+            >
+              <Globe size={14} />
+              <span className={i18n.language !== "bg" ? "text-cyan-300" : ""}>EN</span>
+              <span className="opacity-50">|</span>
+              <span className={i18n.language === "bg" ? "text-cyan-300" : ""}>BG</span>
+            </button>
+            <button
+              type="button"
+              onClick={loadInquiries}
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            >
+              <RefreshCw size={14} />
+              {t("crm.refresh")}
+            </button>
+          </div>
         </header>
 
         {loading ? (
           <div className="flex items-center gap-3 text-[var(--secondary)]">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
-            Loading CRM records...
+            {t("crm.loading")}
           </div>
         ) : (
           <div className="grid gap-8">
             <section className="glass-panel rounded-2xl p-6">
-              <h2 className="mb-4 text-xl font-semibold text-white">Ново CRM запитване</h2>
+              <h2 className="mb-4 text-xl font-semibold text-white">{t("crm.new_inquiry")}</h2>
               <form onSubmit={submitInquiry} className="grid gap-3 md:grid-cols-2">
                 <input
                   className="rounded-lg border border-[var(--border-glass)] bg-black/30 px-4 py-3 text-sm outline-none focus:border-[var(--accent)]"
-                  placeholder="Клиент"
+                  placeholder={t("crm.client")}
                   value={form.client_name}
                   onChange={(e) => setForm({ ...form, client_name: e.target.value })}
                   required
                 />
                 <input
                   className="rounded-lg border border-[var(--border-glass)] bg-black/30 px-4 py-3 text-sm outline-none focus:border-[var(--accent)]"
-                  placeholder="Email"
+                  placeholder={t("crm.email")}
                   type="email"
                   value={form.client_email}
                   onChange={(e) => setForm({ ...form, client_email: e.target.value })}
@@ -243,14 +254,14 @@ export default function CRMDashboard() {
                 />
                 <input
                   className="rounded-lg border border-[var(--border-glass)] bg-black/30 px-4 py-3 text-sm outline-none focus:border-[var(--accent)]"
-                  placeholder="Култура"
+                  placeholder={t("crm.crop")}
                   value={form.requested_crop}
                   onChange={(e) => setForm({ ...form, requested_crop: e.target.value })}
                   required
                 />
                 <input
                   className="rounded-lg border border-[var(--border-glass)] bg-black/30 px-4 py-3 text-sm outline-none focus:border-[var(--accent)]"
-                  placeholder="Тона"
+                  placeholder={t("crm.tons")}
                   type="number"
                   min="1"
                   value={form.quantity_tons}
@@ -259,14 +270,14 @@ export default function CRMDashboard() {
                 />
                 <input
                   className="rounded-lg border border-[var(--border-glass)] bg-black/30 px-4 py-3 text-sm outline-none focus:border-[var(--accent)]"
-                  placeholder="Дестинация"
+                  placeholder={t("crm.destination")}
                   value={form.destination}
                   onChange={(e) => setForm({ ...form, destination: e.target.value })}
                   required
                 />
                 <input
                   className="rounded-lg border border-[var(--border-glass)] bg-black/30 px-4 py-3 text-sm outline-none focus:border-[var(--accent)]"
-                  placeholder="Бележки"
+                  placeholder={t("crm.notes")}
                   value={form.additional_notes}
                   onChange={(e) => setForm({ ...form, additional_notes: e.target.value })}
                 />
@@ -275,7 +286,7 @@ export default function CRMDashboard() {
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#00bfff] disabled:opacity-50 md:col-span-2"
                 >
                   <Send size={16} />
-                  {submitting ? "Изпращане..." : "Изпрати с автоматичен AI draft"}
+                  {submitting ? t("crm.submitting") : t("crm.submit")}
                 </button>
               </form>
             </section>
@@ -283,16 +294,16 @@ export default function CRMDashboard() {
             <section className="glass-panel rounded-2xl p-6">
               <div className="mb-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-xl font-semibold text-white">Попитай TerraIQ AI</h2>
+                  <h2 className="text-xl font-semibold text-white">{t("crm.ask_title")}</h2>
                   <a
                     href={"mailto:" + contactEmail + "?subject=TerraIQ%20CRM%20contact"}
                     className="rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-xs font-semibold text-[var(--accent)] transition hover:bg-[var(--accent)] hover:text-black"
                   >
-                    За контакт
+                    {t("crm.contact")}
                   </a>
                 </div>
                 <p className="mt-1 text-sm text-[var(--secondary)]">
-                  Задай въпрос за препоръки, оферти, риск, логистика, качество или договор.
+                  {t("crm.ask_placeholder")}
                 </p>
               </div>
               <div className="grid gap-3">
@@ -313,19 +324,19 @@ export default function CRMDashboard() {
                   onChange={(event) => setQuestion(event.target.value)}
                   rows={4}
                   className="w-full rounded-xl border border-[var(--border-glass)] bg-black/30 p-4 text-sm text-white outline-none placeholder:text-[var(--secondary)] focus:border-[var(--accent)]"
-                  placeholder="Например: Предложи оферта за 500 тона пшеница FOB Варна с цена и логистика включени..."
+                  placeholder={t("crm.ask_example")}
                 />
                 <button
                   onClick={askTerraIq}
                   disabled={asking || !question.trim()}
                   className="w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#00bfff] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {asking ? "TerraIQ AI мисли..." : "Попитай TerraIQ AI"}
+                  {asking ? t("crm.thinking") : t("crm.ask_button")}
                 </button>
                 {answer ? (
                   <div className="rounded-xl border border-[var(--border-glass)] bg-black/40 p-4">
                     <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
-                      Отговор
+                      {t("crm.answer")}
                     </div>
                     <pre className="whitespace-pre-wrap font-sans text-sm leading-6 text-[var(--secondary)]">
                       {answer}
@@ -337,7 +348,7 @@ export default function CRMDashboard() {
 
             {inquiries.length === 0 ? (
               <div className="rounded-xl border border-[var(--border-glass)] bg-black/30 p-5 text-sm text-[var(--secondary)]">
-                Няма запазени CRM записи.
+                {t("crm.empty")}
               </div>
             ) : null}
 
@@ -348,13 +359,13 @@ export default function CRMDashboard() {
                     <h2 className="text-xl font-medium text-white">{inq.inquiry.client_name}</h2>
                     <div className="mt-2 flex flex-wrap gap-4 text-sm text-[var(--secondary)]">
                       <span>
-                        Demand:{" "}
+                        {t("crm.demand")}:{" "}
                         <strong className="text-white">
                           {inq.inquiry.quantity_tons}t {inq.inquiry.requested_crop}
                         </strong>
                       </span>
                       <span>
-                        Dest: <strong className="text-white">{inq.inquiry.destination}</strong>
+                        {t("crm.dest")}: <strong className="text-white">{inq.inquiry.destination}</strong>
                       </span>
                     </div>
                   </div>
@@ -366,23 +377,23 @@ export default function CRMDashboard() {
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   <div className="rounded-xl border border-[var(--border-glass)] bg-black/30 p-5">
                     <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-white">
-                      <Bot size={16} className="text-[var(--accent)]" /> AI Agent Strategy
+                      <Bot size={16} className="text-[var(--accent)]" /> {t("crm.agent_strategy")}
                     </h3>
                     <div className="space-y-4">
                       <div className="rounded-lg border border-[var(--border-glass)] border-l-2 border-l-indigo-500 bg-[var(--card)]/50 p-3">
                         <div className="mb-1 font-mono text-[10px] tracking-widest text-indigo-400">
-                          SALES AGENT
+                          {t("crm.sales_agent")}
                         </div>
                         <p className="text-sm leading-relaxed text-[var(--secondary)]">
-                          {inq.orchestrator_result?.sales_analysis || "Липсва sales analysis."}
+                          {inq.orchestrator_result?.sales_analysis || t("crm.no_sales")}
                         </p>
                       </div>
                       <div className="rounded-lg border border-[var(--border-glass)] border-l-2 border-l-amber-500 bg-[var(--card)]/50 p-3">
                         <div className="mb-1 font-mono text-[10px] tracking-widest text-amber-400">
-                          FINANCE AGENT
+                          {t("crm.finance_agent")}
                         </div>
                         <p className="text-sm leading-relaxed text-[var(--secondary)]">
-                          {inq.orchestrator_result?.finance_analysis || "Липсва finance analysis."}
+                          {inq.orchestrator_result?.finance_analysis || t("crm.no_finance")}
                         </p>
                       </div>
                     </div>
@@ -390,16 +401,16 @@ export default function CRMDashboard() {
 
                   <div className="flex flex-col rounded-xl border border-[var(--border-glass)] bg-[var(--card)] p-5">
                     <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-white">
-                      <MessageSquare size={16} className="text-[var(--accent)]" /> Generated Draft
+                      <MessageSquare size={16} className="text-[var(--accent)]" /> {t("crm.generated_draft")}
                     </h3>
                     <div className="flex-1 overflow-auto rounded-lg border border-[var(--border-glass)] bg-black/50 p-4">
                       <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-[var(--secondary)]">
-                        {inq.orchestrator_result?.final_recommendation || "Няма генериран draft."}
+                        {inq.orchestrator_result?.final_recommendation || t("crm.no_draft")}
                       </pre>
                     </div>
                     <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--accent)] py-3 text-sm font-semibold text-black transition-colors hover:bg-[#00bfff]">
                       <CheckCircle2 size={18} />
-                      Approve & Send to Client
+                      {t("crm.approve_send")}
                     </button>
                   </div>
                 </div>
