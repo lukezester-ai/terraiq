@@ -1,9 +1,12 @@
+import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import os
 
 router = APIRouter()
+
+KONTOR21_API = os.getenv("KONTOR21_API_URL", "https://kontor21.onrender.com")
 
 
 class EscrowRequest(BaseModel):
@@ -16,12 +19,14 @@ class EscrowRequest(BaseModel):
     delivery_port: str
     delivery_date: str
     payment_milestones: int = 2
-    kontor21_endpoint: Optional[str] = None
+    buyer_wallet: str
+    seller_wallet: str
 
 
 class EscrowResponse(BaseModel):
     status: str
     escrow_id: str
+    kontor21_url: Optional[str] = None
     contract_address: Optional[str] = None
     amount_usdc: float
     milestones: list[dict]
@@ -43,13 +48,34 @@ async def propose_escrow(req: EscrowRequest):
         for i in range(req.payment_milestones)
     ]
 
-    escrow_id = f"escrow_{req.counterparty[:8].lower()}_{hash(req.commodity + req.delivery_date) % 10000:04d}"
+    condition_desc = f"{req.quantity_tons}t {req.commodity}, {req.delivery_terms} {req.delivery_port}, delivery {req.delivery_date}"
 
-    kontor21_url = req.kontor21_endpoint or os.getenv("KONTOR21_API_URL", "http://localhost:3001")
+    kontor21_result = None
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(f"{KONTOR21_API}/api/escrow", json={
+                "productName": req.commodity,
+                "quantity": req.quantity_tons,
+                "priceUsdc": req.price_per_unit,
+                "buyerWallet": req.buyer_wallet,
+                "sellerWallet": req.seller_wallet,
+                "unit": "tons",
+                "conditionDescription": condition_desc,
+            })
+            if resp.status_code == 200:
+                kontor21_result = resp.json()
+    except Exception:
+        pass
+
+    escrow_id = kontor21_result["tradeId"] if kontor21_result else (
+        f"escrow_{req.counterparty[:8].lower()}_{abs(hash(condition_desc)) % 10000:04d}"
+    )
+    kontor21_url = kontor21_result["kontor21_url"] if kontor21_result else f"{KONTOR21_API}/trade/new?product={req.commodity}&quantity={req.quantity_tons}&price={req.price_per_unit}&buyer={req.buyer_wallet}&seller={req.seller_wallet}&terms={req.delivery_terms}&port={req.delivery_port}"
 
     return EscrowResponse(
         status="proposed",
         escrow_id=escrow_id,
+        kontor21_url=kontor21_url,
         contract_address=None,
         amount_usdc=round(total, 2),
         milestones=milestones,
@@ -57,8 +83,7 @@ async def propose_escrow(req: EscrowRequest):
             f"Proposed {req.payment_milestones}-milestone USDC escrow for {req.quantity_tons}t "
             f"{req.commodity} @ {req.price_per_unit}/t {req.currency}. "
             f"Total: {round(total, 2)} {req.currency}. "
-            f"Delivery: {req.delivery_terms} {req.delivery_port} by {req.delivery_date}. "
-            f"Submit to kontor21 at {kontor21_url} for smart contract deployment."
+            f"Open in kontor21 to sign with MetaMask: {kontor21_url}"
         ),
     )
 
@@ -68,7 +93,6 @@ async def confirm_escrow(escrow_id: str):
     return {
         "status": "confirmed",
         "escrow_id": escrow_id,
-        "message": f"Escrow {escrow_id} ready for kontor21 deployment. "
-                   "Deploy smart contract via kontor21 frontend or API.",
-        "next_step": "Deploy KontorEscrow contract with terms above",
+        "message": f"Escrow {escrow_id} ready for kontor21 deployment.",
+        "next_step": "Open kontor21 and sign the escrow with MetaMask",
     }

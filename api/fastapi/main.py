@@ -9,7 +9,9 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-# from opentelemetry.exporter.prometheus import PrometheusMetricsExporter
+
+# Prometheus metrics
+from prometheus_client import Counter, Histogram
 
 from routers import rag, image, crm, payments, intelligence, markets, execution
 from orchestrator import run_orchestrator
@@ -28,11 +30,22 @@ resource = Resource(attributes={
 })
 provider = TracerProvider(resource=resource)
 trace.set_tracer_provider(provider)
-# Prometheus exporter (exposes at /metrics)
-# prometheus_exporter = PrometheusMetricsExporter()
-# provider.add_span_processor(BatchSpanProcessor(prometheus_exporter))
+
+# Prometheus metrics
+REQUEST_COUNT = Counter("terraiq_requests_total", "Total requests", ["method", "endpoint"])
+REQUEST_LATENCY = Histogram("terraiq_request_latency_seconds", "Request latency", ["endpoint"])
 
 app = FastAPI(title="TerraIQ — Global Commodity Intelligence & Web3 Settlement", version="0.2.0")
+
+# Prometheus metrics middleware
+import time
+@app.middleware("http")
+async def metrics_middleware(request, call_next):
+    REQUEST_COUNT.labels(method=request.method, endpoint=request.url.path).inc()
+    start = time.time()
+    response = await call_next(request)
+    REQUEST_LATENCY.labels(endpoint=request.url.path).observe(time.time() - start)
+    return response
 
 cors_origins = [
     origin.strip()
@@ -83,7 +96,8 @@ async def shutdown_event():
     await close_kafka_producer()
 
 
-# Expose Prometheus metrics endpoint (provided by exporter)
-# @app.get("/metrics")
-# async def metrics():
-#     return prometheus_exporter.metrics
+@app.get("/metrics")
+async def metrics():
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    from starlette.responses import Response
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
