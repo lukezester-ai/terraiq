@@ -90,6 +90,17 @@ async def orchestrate(request: OrchestrateRequest):
     return {"status": "success", "recommendation": result["final_recommendation"], "details": result}
 
 
+# Auto-bootstrap DB schema on startup (idempotent, skipped if DB is unreachable).
+@app.on_event("startup")
+async def startup_event():
+    try:
+        from dependencies import engine
+        from bootstrap import ensure_schema
+        ensure_schema(engine)
+        print("Database schema ensured.")
+    except Exception as e:
+        print(f"Schema bootstrap skipped (DB unavailable): {e}")
+
 # FIX #10: Properly close Kafka producer on app shutdown to avoid resource leaks
 @app.on_event("shutdown")
 async def shutdown_event():
