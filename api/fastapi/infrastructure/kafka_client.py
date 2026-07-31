@@ -2,9 +2,15 @@ import os
 import json
 from aiokafka import AIOKafkaProducer
 
-# Kafka is OPTIONAL. When KAFKA_BROKER_URL is not set (e.g. Vercel serverless),
-# event emission is skipped instead of trying to connect to localhost:9092.
+# Kafka is OPTIONAL. When KAFKA_BROKER_URL is not set or points to a local
+# dev placeholder (localhost / 127.0.0.1), event emission is skipped instead
+# of trying to connect to a broker that does not exist (e.g. Vercel serverless).
 KAFKA_BROKER_URL = os.getenv("KAFKA_BROKER_URL") or None
+if KAFKA_BROKER_URL and (
+    KAFKA_BROKER_URL.startswith("localhost")
+    or KAFKA_BROKER_URL.startswith("127.0.0.1")
+):
+    KAFKA_BROKER_URL = None
 
 # Global producer instance
 producer: AIOKafkaProducer = None
