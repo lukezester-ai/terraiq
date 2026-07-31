@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { verifyAdminSessionToken } from "@/lib/admin-auth";
 
-export function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
+  const secret = (process.env.TERRAIQ_ADMIN_PASSWORD || "").trim();
   const authCookie = request.cookies.get("terraiq_auth");
 
-  if (!authCookie || authCookie.value !== "true") {
+  if (!(await verifyAdminSessionToken(authCookie?.value, secret))) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

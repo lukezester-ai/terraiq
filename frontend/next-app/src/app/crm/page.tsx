@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Bot, Briefcase, CheckCircle2, Globe, MessageSquare, RefreshCw, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -131,8 +131,7 @@ export default function CRMDashboard() {
     );
   }, [inquiries, t]);
 
-  const loadInquiries = async () => {
-    setLoading(true);
+  const loadInquiries = useCallback(async () => {
     try {
       const res = await fetch(apiBaseUrl + "/crm/inquiries", { cache: "no-store" });
       const data = (await res.json()) as InquiryResponse;
@@ -151,11 +150,15 @@ export default function CRMDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
-    void loadInquiries();
-  }, []);
+    const loadInitialInquiries = async () => {
+      await loadInquiries();
+    };
+
+    void loadInitialInquiries();
+  }, [loadInquiries]);
 
   const submitInquiry = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

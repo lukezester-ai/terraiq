@@ -28,7 +28,7 @@ export default function LoginPage() {
       } else {
         setError("Грешна парола");
       }
-    } catch (err) {
+    } catch {
       setError("Възникна грешка при свързване.");
     } finally {
       setLoading(false);
