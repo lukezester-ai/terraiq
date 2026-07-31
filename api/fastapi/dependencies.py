@@ -5,7 +5,13 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 import redis.asyncio as redis_async
 from openai import AsyncOpenAI
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://terraiq:terraiqpass@localhost:5432/terraiqdb")
+DATABASE_URL = (
+    os.getenv("DATABASE_URL")
+    or os.getenv("POSTGRES_URL")
+    or os.getenv("DATABASE_URL_NON_POOLING")
+    or os.getenv("POSTGRES_URL_NON_POOLING")
+    or "postgresql+psycopg2://terraiq:terraiqpass@localhost:5432/terraiqdb"
+)
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = scoped_session(sessionmaker(autoflush=False, bind=engine))
 

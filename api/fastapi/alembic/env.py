@@ -18,7 +18,14 @@ if config.config_file_name is not None and config.get_section("loggers") is not 
 # For async use we still need to provide the sync engine for Alembic
 
 # Retrieve DB URL from environment (fallback to same as alembic.ini)
-url = os.getenv("DATABASE_URL", "postgresql+psycopg2://terraiq:terraiqpass@localhost:5432/terraiqdb")
+# Accepts DATABASE_URL or Vercel Postgres env var names (POSTGRES_URL, *_NON_POOLING).
+url = (
+    os.getenv("DATABASE_URL")
+    or os.getenv("POSTGRES_URL")
+    or os.getenv("DATABASE_URL_NON_POOLING")
+    or os.getenv("POSTGRES_URL_NON_POOLING")
+    or "postgresql+psycopg2://terraiq:terraiqpass@localhost:5432/terraiqdb"
+)
 config.set_main_option('sqlalchemy.url', url)
 
 def run_migrations_offline():
