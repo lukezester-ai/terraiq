@@ -1,52 +1,17 @@
 "use client";
 import { motion } from "framer-motion";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://terraiq-api.onrender.com";
 
 export default function PricingPage() {
+  const { t, i18n } = useTranslation();
+
   const plans = [
-    {
-      id: "start",
-      name: "Start",
-      price: "19",
-      annualPrice: "15",
-      description: "За стартиращи търговци, които искат AI проверка на сделки.",
-      features: [
-        "AI проверка на сделки (до 10/мес.)",
-        "1 портфейл",
-        "Пазарни референтни цени",
-        "Основни рискови сигнали",
-      ],
-    },
-    {
-      id: "business",
-      name: "Business",
-      price: "59",
-      annualPrice: "47",
-      popular: true,
-      description: "За професионални търговци, които продават автоматизирано.",
-      features: [
-        "AI проверка на сделки (до 100/мес.)",
-        "Автоматичен escrow (kontor21)",
-        "AI търговски агент (Sales AI)",
-        "Приоритетна проверка (SLA)",
-        "История и анализи на сделки",
-      ],
-    },
-    {
-      id: "enterprise",
-      name: "Enterprise",
-      price: "199",
-      annualPrice: "159",
-      description: "За търговски платформи и големи портфейли.",
-      features: [
-        "Неограничени AI проверки",
-        "API интеграции и Webhooks",
-        "Dedicated SLA & поддръжка",
-        "Интеграции с ERP/екосистеми",
-      ],
-    },
+    { id: "start", key: "start", price: "19", annualPrice: "15" },
+    { id: "business", key: "business", price: "59", annualPrice: "47", popular: true },
+    { id: "enterprise", key: "enterprise", price: "199", annualPrice: "159" },
   ];
 
   const handleCheckout = async (planId: string) => {
@@ -69,75 +34,90 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-8 font-sans flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-neutral-950 text-white p-8 font-sans flex flex-col items-center justify-center relative">
+      <button
+        onClick={() => i18n.changeLanguage(i18n.language === "bg" ? "en" : "bg")}
+        className="absolute top-6 right-6 flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-cyan-300 transition-colors bg-[#131A26] px-2 py-1.5 rounded-md border border-[#243041]"
+      >
+        <Globe size={14} />
+        <span className={i18n.language !== "bg" ? "text-cyan-300" : ""}>EN</span>
+        <span className="opacity-50">|</span>
+        <span className={i18n.language === "bg" ? "text-cyan-300" : ""}>BG</span>
+      </button>
+
       <div className="text-center max-w-3xl mb-16 mt-8">
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-5xl font-bold mb-6 bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent"
         >
-          Инвестирайте в Бъдещето
+          {t("pricing.title")}
         </motion.h1>
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
           className="text-xl text-neutral-400"
         >
-          Изберете плана, който отговаря на мащаба на вашето стопанство. Плащанията са защитени от Stripe.
+          {t("pricing.subtitle")}
         </motion.p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl w-full">
-        {plans.map((plan, idx) => (
-          <motion.div
-            key={plan.name}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 * idx }}
-            className={`relative p-8 rounded-2xl border ${
-              plan.popular ? "border-emerald-500 bg-emerald-950/20" : "border-neutral-800 bg-neutral-900/50"
-            } flex flex-col`}
-          >
-            {plan.popular && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-emerald-500 text-neutral-950 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Най-препоръчван
-              </div>
-            )}
-            
-            <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-            <p className="text-neutral-400 mb-6 h-12">{plan.description}</p>
-            
-            <div className="mb-8 flex flex-col items-start">
-              <div className="flex items-baseline">
-                <span className="text-5xl font-extrabold">{plan.price}</span>
-                <span className="text-xl text-neutral-500 ml-2">EUR / мес</span>
-              </div>
-              <span className="text-sm text-emerald-400 mt-2">или {plan.annualPrice} EUR/мес при годишно плащане (-20%)</span>
-            </div>
-            
-            <ul className="space-y-4 mb-8 flex-1">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex items-start">
-                  <Check className="w-5 h-5 text-emerald-400 mr-3 shrink-0 mt-0.5" />
-                  <span className="text-neutral-300">{feature}</span>
-                </li>
-              ))}
-            </ul>
-            
-            <button
-              onClick={() => handleCheckout(plan.id)}
-              className={`w-full py-4 rounded-xl font-bold flex items-center justify-center transition-all ${
-                plan.popular 
-                  ? "bg-emerald-500 hover:bg-emerald-400 text-neutral-950" 
-                  : "bg-neutral-800 hover:bg-neutral-700 text-white"
-              }`}
+        {plans.map((plan, idx) => {
+          const features = t(`pricing.${plan.key}.features`, { returnObjects: true }) as string[];
+          return (
+            <motion.div
+              key={plan.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * idx }}
+              className={`relative p-8 rounded-2xl border ${
+                plan.popular ? "border-emerald-500 bg-emerald-950/20" : "border-neutral-800 bg-neutral-900/50"
+              } flex flex-col`}
             >
-              Абонирай се
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </button>
-          </motion.div>
-        ))}
+              {plan.popular && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-emerald-500 text-neutral-950 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  {t("pricing.popular")}
+                </div>
+              )}
+
+              <h3 className="text-2xl font-bold mb-2">{t(`pricing.${plan.key}.name`)}</h3>
+              <p className="text-neutral-400 mb-6 h-12">{t(`pricing.${plan.key}.desc`)}</p>
+
+              <div className="mb-8 flex flex-col items-start">
+                <div className="flex items-baseline">
+                  <span className="text-5xl font-extrabold">{plan.price}</span>
+                  <span className="text-xl text-neutral-500 ml-2">{t("pricing.monthly")}</span>
+                </div>
+                <span className="text-sm text-emerald-400 mt-2">
+                  {t("pricing.annual_note", { price: plan.annualPrice })}
+                </span>
+              </div>
+
+              <ul className="space-y-4 mb-8 flex-1">
+                {features.map((feature) => (
+                  <li key={feature} className="flex items-start">
+                    <Check className="w-5 h-5 text-emerald-400 mr-3 shrink-0 mt-0.5" />
+                    <span className="text-neutral-300">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => handleCheckout(plan.id)}
+                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center transition-all ${
+                  plan.popular
+                    ? "bg-emerald-500 hover:bg-emerald-400 text-neutral-950"
+                    : "bg-neutral-800 hover:bg-neutral-700 text-white"
+                }`}
+              >
+                {t("pricing.subscribe")}
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </button>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

@@ -88,6 +88,45 @@ const resources = {
         prompt_2: "Assess shipment delay risk. What payment terms if vessel is late and client wants compensation?",
         prompt_3: "Need 1200t sunflower to Constanta. Prepare commercial letter to potential client for 30 days.",
         prompt_4: "Compare three farms: price, logistics, quality grade, terms and export options via port."
+      },
+      pricing: {
+        title: "Invest in the Future",
+        subtitle: "Choose the plan that fits the scale of your trading operation. Payments are secured by Stripe.",
+        monthly: "EUR / month",
+        annual_note: "or {{price}} EUR/mo billed annually (-20%)",
+        subscribe: "Subscribe",
+        popular: "Most Popular",
+        start: {
+          name: "Start",
+          desc: "For starting traders who want AI deal verification.",
+          features: [
+            "AI deal verification (up to 10/mo.)",
+            "1 wallet portfolio",
+            "Market reference prices",
+            "Core risk signals",
+          ],
+        },
+        business: {
+          name: "Business",
+          desc: "For professional traders who sell automated.",
+          features: [
+            "AI deal verification (up to 100/mo.)",
+            "Automatic escrow (kontor21)",
+            "AI sales agent",
+            "Priority verification (SLA)",
+            "Deal history & analytics",
+          ],
+        },
+        enterprise: {
+          name: "Enterprise",
+          desc: "For trading platforms and large portfolios.",
+          features: [
+            "Unlimited AI verifications",
+            "API integrations & Webhooks",
+            "Dedicated SLA & support",
+            "ERP / ecosystem integrations",
+          ],
+        },
       }
     }
   },
@@ -176,6 +215,45 @@ const resources = {
         prompt_2: "Оцени риск от забавяне на рейса. Какви условия за плащане, ако корабът закъснее и клиентът иска компенсация?",
         prompt_3: "Нужна поддръжка 1200 тн слънчоглед до Констанца. Подготви комерсиално писмо до потенциалния клиент за 30 дни.",
         prompt_4: "Сравни три ферми: цена, логистика, качество клас, условия и варианти за експорт през пристанище."
+      },
+      pricing: {
+        title: "Инвестирайте в Бъдещето",
+        subtitle: "Изберете плана, който отговаря на мащаба на вашата търговия. Плащанията са защитени от Stripe.",
+        monthly: "EUR / мес",
+        annual_note: "или {{price}} EUR/мес при годишно плащане (-20%)",
+        subscribe: "Абонирай се",
+        popular: "Най-препоръчван",
+        start: {
+          name: "Start",
+          desc: "За стартиращи търговци, които искат AI проверка на сделки.",
+          features: [
+            "AI проверка на сделки (до 10/мес.)",
+            "1 портфейл",
+            "Пазарни референтни цени",
+            "Основни рискови сигнали",
+          ],
+        },
+        business: {
+          name: "Business",
+          desc: "За професионални търговци, които продават автоматизирано.",
+          features: [
+            "AI проверка на сделки (до 100/мес.)",
+            "Автоматичен escrow (kontor21)",
+            "AI търговски агент (Sales AI)",
+            "Приоритетна проверка (SLA)",
+            "История и анализи на сделки",
+          ],
+        },
+        enterprise: {
+          name: "Enterprise",
+          desc: "За търговски платформи и големи портфейли.",
+          features: [
+            "Неограничени AI проверки",
+            "API интеграции и Webhooks",
+            "Dedicated SLA & поддръжка",
+            "Интеграции с ERP/екосистеми",
+          ],
+        },
       }
     }
   }
