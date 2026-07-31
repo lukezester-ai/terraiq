@@ -234,9 +234,18 @@ def synthesize_verdict(checks: list, ai: dict) -> dict:
         confidence = round(0.7 * confidence + 0.3 * ai_conf, 3)
 
     ai_recommendation = ai.get("recommendation", "")
+
+    # AI compliance red flags are hard failures (decisive for rejection).
+    for flag in ai.get("compliance_flags", []):
+        fails.append({"category": "compliance", "name": "AI red flag", "status": "FAIL", "detail": str(flag)})
+
+    # AI REVIEW on "insufficient data" is informational, not a blocker:
+    # deterministic FAILs / AI REJECT / compliance flags block; only
+    # deterministic WARNs route to manual review. This keeps the flow
+    # fully automated for clean deals while AI stays the safety net.
     if fails or ai_recommendation == "REJECT":
         verdict = "REJECTED"
-    elif warns or ai_recommendation == "REVIEW":
+    elif warns:
         verdict = "MANUAL_REVIEW"
     else:
         verdict = "APPROVED"
@@ -245,6 +254,8 @@ def synthesize_verdict(checks: list, ai: dict) -> dict:
     for c in checks:
         if c.status != "PASS":
             reasons.append(f"[{c.status}] {c.name}: {c.detail}")
+    for flag in ai.get("compliance_flags", []):
+        reasons.append(f"[FAIL] AI red flag: {flag}")
 
     return {
         "verdict": verdict,
