@@ -9,6 +9,12 @@ from sqlalchemy.orm import Session
 
 from dependencies import get_db
 from orchestrator import run_orchestrator
+from verification import (
+    build_deal,
+    create_kontor21_escrow,
+    market_benchmark,
+    verify_deal,
+)
 
 router = APIRouter()
 
@@ -20,6 +26,8 @@ class InboundInquiry(BaseModel):
     quantity_tons: int
     destination: str
     additional_notes: str = ""
+    buyer_wallet: str = ""
+    seller_wallet: str = ""
 
 
 def _serialize_record(row) -> dict:
@@ -55,6 +63,9 @@ async def receive_inquiry(inquiry: InboundInquiry, db: Session = Depends(get_db)
         f"Generate a commercial offer."
     )
 
+    benchmark_price, benchmark_unit, benchmark_source = market_benchmark(inquiry.requested_crop)
+    deal = build_deal(inquiry.model_dump(), benchmark_price, benchmark_source)
+
     db.execute(
         text(
             """
@@ -81,6 +92,28 @@ async def receive_inquiry(inquiry: InboundInquiry, db: Session = Depends(get_db)
 
     try:
         result = await run_orchestrator(query=query, farm_id="system")
+
+        verified = await verify_deal(deal)
+        verdict = verified["verification"]
+        status = "Deal Created" if verdict["auto_create"] else (
+            "Verification Review" if verdict["verdict"] == "MANUAL_REVIEW" else "Rejected"
+        )
+
+        trade_id = None
+        kontor21_url = None
+        if verdict["auto_create"]:
+            created = await create_kontor21_escrow(deal)
+            if created["status"] == "draft_created":
+                response = created["response"]
+                trade_id = response.get("tradeId")
+                kontor21_url = response.get("kontor21_url")
+                status = "Deal Created"
+
+        result["verification"] = verified
+        result["deal"] = deal
+        result["trade_id"] = trade_id
+        result["kontor21_url"] = kontor21_url
+
         update_statement = text(
             """
             UPDATE crm_inquiries
@@ -94,14 +127,19 @@ async def receive_inquiry(inquiry: InboundInquiry, db: Session = Depends(get_db)
             update_statement,
             {
                 "id": inquiry_id,
-                "status": "Draft Ready",
+                "status": status,
                 "orchestrator_result": result,
             },
         )
         return {
             "status": "success",
             "inquiry_id": inquiry_id,
+            "deal_status": status,
+            "verdict": verdict["verdict"],
+            "confidence": verdict["confidence"],
             "draft": result.get("final_recommendation"),
+            "trade_id": trade_id,
+            "kontor21_url": kontor21_url,
         }
     except Exception as exc:
         db.execute(

@@ -20,6 +20,23 @@ type Inquiry = {
     final_recommendation?: string;
     finance_analysis?: string;
     sales_analysis?: string;
+    trade_id?: string | null;
+    kontor21_url?: string | null;
+    deal?: {
+      buyer_wallet?: string;
+      seller_wallet?: string;
+      price_per_unit?: number;
+      delivery_terms?: string;
+      delivery_port?: string;
+      delivery_date?: string;
+    } | null;
+    verification?: {
+      verdict?: string;
+      confidence?: number;
+      reasons?: string[];
+      checks?: { category: string; name: string; status: string; detail: string }[];
+      auto_create?: boolean;
+    } | null;
   } | null;
 };
 
@@ -35,6 +52,7 @@ type InquiryForm = {
   quantity_tons: string;
   destination: string;
   additional_notes: string;
+  buyer_wallet: string;
 };
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://terraiq-api.onrender.com";
@@ -56,6 +74,13 @@ const demoInquiry: Inquiry = {
     finance_analysis: "Demo response: Analyzed margins, logistics, FX risk and pricing.",
     final_recommendation:
       "This is a demo fallback. Start FastAPI and Postgres, apply migrations and submit a real CRM inquiry to use AI.",
+    trade_id: null,
+    kontor21_url: null,
+    verification: {
+      verdict: "MANUAL_REVIEW",
+      confidence: 0.6,
+      reasons: ["[WARN] No market benchmark verified in demo mode."],
+    },
   },
 };
 
@@ -66,6 +91,7 @@ const emptyForm: InquiryForm = {
   quantity_tons: "500",
   destination: "Varna Port",
   additional_notes: "",
+  buyer_wallet: "0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5",
 };
 
 export default function CRMDashboard() {
@@ -143,6 +169,7 @@ export default function CRMDashboard() {
         quantity_tons: Number(form.quantity_tons),
         destination: form.destination.trim(),
         additional_notes: form.additional_notes.trim(),
+        buyer_wallet: form.buyer_wallet.trim(),
       };
       const res = await fetch(apiBaseUrl + "/crm/inbound", {
         method: "POST",
@@ -281,6 +308,12 @@ export default function CRMDashboard() {
                   value={form.additional_notes}
                   onChange={(e) => setForm({ ...form, additional_notes: e.target.value })}
                 />
+                <input
+                  className="rounded-lg border border-[var(--border-glass)] bg-black/30 px-4 py-3 font-mono text-xs outline-none focus:border-[var(--accent)]"
+                  placeholder={t("crm.buyer_wallet")}
+                  value={form.buyer_wallet}
+                  onChange={(e) => setForm({ ...form, buyer_wallet: e.target.value })}
+                />
                 <button
                   disabled={submitting}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#00bfff] disabled:opacity-50 md:col-span-2"
@@ -369,7 +402,18 @@ export default function CRMDashboard() {
                       </span>
                     </div>
                   </div>
-                  <span className="h-fit rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium tracking-wide text-emerald-400">
+                  <span
+                    className={
+                      "h-fit rounded-full border px-3 py-1 text-xs font-medium tracking-wide " +
+                      (inq.status === "Deal Created"
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                        : inq.status === "Rejected"
+                          ? "border-red-500/20 bg-red-500/10 text-red-400"
+                          : inq.status === "Verification Review"
+                            ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
+                            : "border-sky-500/20 bg-sky-500/10 text-sky-400")
+                    }
+                  >
                     {inq.status}
                   </span>
                 </div>
@@ -408,10 +452,79 @@ export default function CRMDashboard() {
                         {inq.orchestrator_result?.final_recommendation || t("crm.no_draft")}
                       </pre>
                     </div>
-                    <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--accent)] py-3 text-sm font-semibold text-black transition-colors hover:bg-[#00bfff]">
-                      <CheckCircle2 size={18} />
-                      {t("crm.approve_send")}
-                    </button>
+
+                    {inq.orchestrator_result?.verification ? (
+                      <div className="mt-4 rounded-lg border border-[var(--border-glass)] bg-black/30 p-4">
+                        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
+                          <CheckCircle2 size={14} /> {t("crm.verification")}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={
+                              "rounded-md px-2 py-0.5 text-xs font-bold " +
+                              (inq.orchestrator_result.verification.verdict === "APPROVED"
+                                ? "bg-emerald-500/20 text-emerald-400"
+                                : inq.orchestrator_result.verification.verdict === "REJECTED"
+                                  ? "bg-red-500/20 text-red-400"
+                                  : "bg-amber-500/20 text-amber-400")
+                            }
+                          >
+                            {inq.orchestrator_result.verification.verdict}
+                          </span>
+                          <span className="text-xs text-[var(--secondary)]">
+                            {t("crm.confidence")}:{" "}
+                            {inq.orchestrator_result.verification.confidence != null
+                              ? Math.round(inq.orchestrator_result.verification.confidence * 100) + "%"
+                              : "—"}
+                          </span>
+                        </div>
+                        {(inq.orchestrator_result.verification.reasons || []).length > 0 ? (
+                          <ul className="mt-2 space-y-1">
+                            {(inq.orchestrator_result.verification.reasons || []).slice(0, 4).map((r, i) => (
+                              <li key={i} className="text-xs leading-5 text-[var(--secondary)]">
+                                {r}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                        {inq.orchestrator_result.deal ? (
+                          <div className="mt-3 space-y-1 border-t border-[var(--border-glass)] pt-2 font-mono text-[11px] text-[var(--secondary)]">
+                            <div>
+                              {t("crm.deal_price")}:{" "}
+                              <span className="text-white">
+                                {inq.orchestrator_result.deal.price_per_unit} USDC/t
+                              </span>
+                            </div>
+                            <div>
+                              {t("crm.buyer_wallet")}:{" "}
+                              <span className="break-all text-white">
+                                {inq.orchestrator_result.deal.buyer_wallet}
+                              </span>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    {inq.status === "Deal Created" && inq.orchestrator_result?.kontor21_url ? (
+                      <a
+                        href={inq.orchestrator_result.kontor21_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 py-3 text-sm font-semibold text-black transition-colors hover:bg-emerald-400"
+                      >
+                        <CheckCircle2 size={18} />
+                        {t("crm.open_deal")}
+                      </a>
+                    ) : (
+                      <button
+                        disabled
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--border-glass)] py-3 text-sm font-semibold text-[var(--secondary)]"
+                      >
+                        <CheckCircle2 size={18} />
+                        {t("crm.auto_deploy")}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

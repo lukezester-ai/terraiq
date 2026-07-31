@@ -135,8 +135,10 @@ async def router_node(state: AgentState) -> AgentState:
         else:
             next_agents = []
             reasoning = "Could not parse router response"
-    if not next_agents:
-        next_agents = ["finance", "risk", "market", "operations", "compliance", "sales", "execution"]
+
+        if not next_agents:
+            next_agents = ["finance", "risk", "market", "operations", "compliance", "sales", "execution"]
+
         print(f"Router decision: {next_agents} — {reasoning}")
         return {"next_agents": next_agents, "router_reasoning": reasoning}
     except Exception as e:
