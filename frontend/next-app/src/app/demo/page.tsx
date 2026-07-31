@@ -48,12 +48,14 @@ type DealResult = {
   draft?: string;
   trade_id?: string | null;
   kontor21_url?: string | null;
+  escrow_error?: string | null;
   orchestrator_result?: {
     sales_analysis?: string;
     finance_analysis?: string;
     final_recommendation?: string;
     trade_id?: string | null;
     kontor21_url?: string | null;
+    escrow_error?: string | null;
     deal?: Deal | null;
     verification?: {
       verdict?: string;
@@ -204,6 +206,7 @@ export default function DemoPage() {
   const recommendation = result?.orchestrator_result?.final_recommendation ?? result?.draft;
   const deal = result?.orchestrator_result?.deal ?? null;
   const kontor21Url = result?.orchestrator_result?.kontor21_url ?? result?.kontor21_url;
+  const escrowError = result?.orchestrator_result?.escrow_error ?? result?.escrow_error;
   const total = deal ? (deal.price_per_unit ?? 0) * (deal.quantity_tons ?? 0) : 0;
 
   const verdictTone =
@@ -541,7 +544,7 @@ export default function DemoPage() {
                 <div>
                   <div className="mb-3 flex items-center gap-2"><Landmark className="text-emerald-300" /><h2 className="text-2xl font-bold">{t("demo.escrow_title")}</h2></div>
                   <p className="text-sm leading-6 text-slate-300">
-                    {kontor21Url ? t("demo.escrow_ready") : t("demo.escrow_waiting")}
+                    {kontor21Url ? t("demo.escrow_ready") : escrowError || t("demo.escrow_waiting")}
                   </p>
                 </div>
                 {kontor21Url ? (

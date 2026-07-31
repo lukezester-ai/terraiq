@@ -95,12 +95,13 @@ async def receive_inquiry(inquiry: InboundInquiry, db: Session = Depends(get_db)
 
         verified = await verify_deal(deal)
         verdict = verified["verification"]
-        status = "Deal Created" if verdict["auto_create"] else (
+        status = "Escrow Pending" if verdict["auto_create"] else (
             "Verification Review" if verdict["verdict"] == "MANUAL_REVIEW" else "Rejected"
         )
 
         trade_id = None
         kontor21_url = None
+        escrow_error = None
         if verdict["auto_create"]:
             created = await create_kontor21_escrow(deal)
             if created["status"] == "draft_created":
@@ -108,11 +109,15 @@ async def receive_inquiry(inquiry: InboundInquiry, db: Session = Depends(get_db)
                 trade_id = response.get("tradeId")
                 kontor21_url = response.get("kontor21_url")
                 status = "Deal Created"
+            else:
+                escrow_error = created.get("error", "kontor21 escrow creation failed")
+                status = "Escrow Creation Failed"
 
         result["verification"] = verified
         result["deal"] = deal
         result["trade_id"] = trade_id
         result["kontor21_url"] = kontor21_url
+        result["escrow_error"] = escrow_error
 
         update_statement = text(
             """
@@ -140,6 +145,7 @@ async def receive_inquiry(inquiry: InboundInquiry, db: Session = Depends(get_db)
             "draft": result.get("final_recommendation"),
             "trade_id": trade_id,
             "kontor21_url": kontor21_url,
+            "escrow_error": escrow_error,
         }
     except Exception as exc:
         db.execute(
