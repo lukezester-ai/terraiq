@@ -5,7 +5,7 @@ const isProduction = process.env.NODE_ENV === "production";
 
 export async function POST(request: Request) {
   try {
-    const { password } = await request.json();
+    const { password, userId } = await request.json();
     const expectedPassword = (process.env.TERRAIQ_ADMIN_PASSWORD || "").trim();
 
     if (!expectedPassword) {
@@ -16,16 +16,20 @@ export async function POST(request: Request) {
     }
 
     if (typeof password === "string" && password === expectedPassword) {
-      const response = NextResponse.json({ success: true });
+      // Use provided userId or default to "admin"
+      const adminUserId = typeof userId === "string" ? userId : "admin";
+      const token = await createAdminSessionToken(expectedPassword, adminUserId, 24); // 24 hour expiry
+
+      const response = NextResponse.json({ success: true, userId: adminUserId });
       response.cookies.set(
         "terraiq_auth",
-        await createAdminSessionToken(expectedPassword),
+        token,
         {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isProduction,
-        maxAge: 60 * 60 * 8,
+          path: "/",
+          httpOnly: true,
+          sameSite: "lax",
+          secure: isProduction,
+          maxAge: 60 * 60 * 24, // 24 hours
         },
       );
       return response;

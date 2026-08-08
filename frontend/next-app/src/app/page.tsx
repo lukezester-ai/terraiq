@@ -64,16 +64,16 @@ const commandItems = [
 ];
 
 const strategicCapabilities = [
-  { title: "Decision Memory", text: "Measures every trade recommendation against real outcomes and profit impact across all commodity markets.", icon: Brain, href: "/crm" },
-  { title: "Commodity Intelligence", text: "Real-time prices, term structures, and spreads across energy, metals, agriculture, and chemicals.", icon: Landmark, href: "/crm" },
-  { title: "Trade Finance", text: "Smart contract escrow, USDC settlement, milestone payments, and automated dispute resolution via kontor21.", icon: Scale, href: "/crm" },
-  { title: "Executive Copilot", text: "Daily briefing on markets, risks, logistics, cash flow, and actionable trade opportunities.", icon: Command, href: "/crm" },
-  { title: "Risk Engine", text: "Multi-factor risk assessment: market, credit, geopolitical, sanctions, and counterparty exposure.", icon: BarChart3, href: "/crm" },
-  { title: "Scenario Engine", text: "What-if simulations across price shocks, supply disruptions, FX moves, and trade policy changes.", icon: GitBranch, href: "/demo" },
-  { title: "Capital Allocation", text: "Ranks the best deployment of capital across commodities, geographies, and trade structures.", icon: CircleDollarSign, href: "/crm" },
-  { title: "Document Brain", text: "RAG over contracts, sanctions lists, regulations, shipping docs, and trade correspondence.", icon: Database, href: "/crm" },
-  { title: "Predictive Analytics", text: "Forecasts commodity prices, freight rates, FX moves, and counterparty credit trends 6-24 months out.", icon: LineChart, href: "/crm" },
-  { title: "Multi-Market", text: "One operating view across physical commodities, financial derivatives, and on-chain settlement.", icon: Factory, href: "/admin" },
+  { title: "Decision Memory", text: "Measures every trade recommendation against real outcomes and profit impact across all commodity markets.", icon: Brain, href: "/crm", status: "BETA" },
+  { title: "Commodity Intelligence", text: "Real-time prices, term structures, and spreads across energy, metals, agriculture, and chemicals.", icon: Landmark, href: "/crm", status: "LIVE" },
+  { title: "Trade Finance", text: "Smart contract escrow, USDC settlement, milestone payments, and automated dispute resolution via kontor21.", icon: Scale, href: "/crm", status: "BETA" },
+  { title: "Executive Copilot", text: "Daily briefing on markets, risks, logistics, cash flow, and actionable trade opportunities.", icon: Command, href: "/crm", status: "LIVE" },
+  { title: "Risk Engine", text: "Multi-factor risk assessment: market, credit, geopolitical, sanctions, and counterparty exposure.", icon: BarChart3, href: "/crm", status: "LIVE" },
+  { title: "Scenario Engine", text: "What-if simulations across price shocks, supply disruptions, FX moves, and trade policy changes.", icon: GitBranch, href: "/demo", status: "LIVE" },
+  { title: "Capital Allocation", text: "Ranks the best deployment of capital across commodities, geographies, and trade structures.", icon: CircleDollarSign, href: "/crm", status: "LIVE" },
+  { title: "Document Brain", text: "RAG over contracts, sanctions lists, regulations, shipping docs, and trade correspondence.", icon: Database, href: "/crm", status: "LIVE" },
+  { title: "Predictive Analytics", text: "Forecasts commodity prices, freight rates, FX moves, and counterparty credit trends 6-24 months out.", icon: LineChart, href: "/crm", status: "PLANNED" },
+  { title: "Multi-Market", text: "One operating view across physical commodities, financial derivatives, and on-chain settlement.", icon: Factory, href: "/admin", status: "LIVE" },
 ];
 
 function LogoMark() {
@@ -353,13 +353,19 @@ export default function LandingPage() {
           </Link>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          {strategicCapabilities.map(({ title, text, icon: Icon, href }) => (
+          {strategicCapabilities.map(({ title, text, icon: Icon, href, status }) => (
             <Link key={title} href={href} className="group flex flex-col justify-between rounded-lg border border-[#243041] bg-[#131A26] p-5 transition-all hover:border-cyan-300/70 hover:bg-[#182232] hover:shadow-[0_0_24px_rgba(0,212,255,0.15)]">
               <div>
                 <div className="mb-4 flex items-center justify-between">
                   <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#243041] bg-[#0B0F19] text-cyan-300 transition-transform group-hover:scale-110"><Icon size={20} /></span>
-                  <span className="flex items-center gap-1 rounded-full border border-[#243041] bg-[#0B0F19] px-2.5 py-1 text-xs font-semibold text-slate-400 group-hover:border-cyan-300/40 group-hover:text-cyan-300">
-                    Open <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
+                  <span className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold group-hover:border-cyan-300/40 group-hover:text-cyan-300 ${
+                    status === 'LIVE'
+                      ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+                      : status === 'BETA'
+                      ? 'border-amber-400/30 bg-amber-400/10 text-amber-300'
+                      : 'border-slate-400/30 bg-slate-400/10 text-slate-400'
+                  }`}>
+                    {status}
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-white group-hover:text-cyan-200">{title}</h3>
