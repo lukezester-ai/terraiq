@@ -2,11 +2,27 @@
   "name": "terraiq",
   "version": "0.1.0",
   "private": true,
+  "description": "TerraIQ monorepo orchestration (Next.js frontend + FastAPI backend + event worker)",
   "scripts": {
-    "dev": "npm --prefix frontend/next-app run dev",
-    "build": "npm --prefix frontend/next-app run build",
-    "start": "npm --prefix frontend/next-app run start",
-    "lint": "npm --prefix frontend/next-app run lint"
+    "dev:frontend": "npm --prefix frontend/next-app run dev",
+    "dev:api": "python -m uvicorn --app-dir api/fastapi main:app --reload --port 8000",
+    "dev:worker": "python event/worker/worker.py",
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev:api\" \"npm run dev:frontend\"",
+    "dev:all": "concurrently -n api,web,worker -c blue,green,magenta \"npm run dev:api\" \"npm run dev:frontend\" \"npm run dev:worker\"",
+    "build:frontend": "npm --prefix frontend/next-app run build",
+    "start:frontend": "npm --prefix frontend/next-app run start",
+    "lint:frontend": "npm --prefix frontend/next-app run lint",
+    "typecheck:frontend": "npm --prefix frontend/next-app run typecheck",
+    "test:api": "cd api/fastapi && python -m pytest test_agents.py -q",
+    "test:api:all": "cd api/fastapi && python -m pytest test_agents.py test_strategy.py test_qdrant.py -q",
+    "build": "npm run build:frontend",
+    "start": "npm run start:frontend",
+    "lint": "npm run lint:frontend",
+    "typecheck": "npm run typecheck:frontend",
+    "seed": "cd api/fastapi && python -m infrastructure.seed_data"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   },
   "engines": {
     "node": ">=20"

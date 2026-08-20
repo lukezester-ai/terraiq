@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint",
+    "test": "echo \"No frontend test runner configured yet\""
   },
   "dependencies": {
     "framer-motion": "^12.40.0",
